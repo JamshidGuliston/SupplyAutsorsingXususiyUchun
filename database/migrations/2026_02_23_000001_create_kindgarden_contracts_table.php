@@ -10,11 +10,11 @@ class CreateKindgardenContractsTable extends Migration
     {
         Schema::create('kindgarden_contracts', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('kindgarden_id');
+            $table->unsignedInteger('kindgarden_id');
             $table->string('contract_number');
             $table->date('contract_date');
             $table->date('start_date');
-            $table->date('end_date')->nullible();
+            $table->date('end_date')->nullable();
             $table->timestamps();
 
             $table->foreign('kindgarden_id')->references('id')->on('kindgardens')->onDelete('cascade');

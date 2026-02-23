@@ -10,7 +10,7 @@ class CreateKindgardenRequisitesTable extends Migration
     {
         Schema::create('kindgarden_requisites', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('kindgarden_id');
+            $table->unsignedInteger('kindgarden_id');
             $table->string('director_name')->nullable();
             $table->string('director_phone')->nullable();
             $table->string('reception_phone')->nullable();
