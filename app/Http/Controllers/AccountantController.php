@@ -40,6 +40,8 @@ use App\Models\Protsents;
 use App\Models\Season;
 use App\Models\Titlemenu;
 use App\Models\Year;
+use App\Models\KindgardenContract;
+use App\Models\KindgardenRequisite;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Http\Request;
@@ -2801,21 +2803,53 @@ class AccountantController extends Controller
         try {
             // Umumiy ma'lumotlar
             $autorser = config('company.autorser');
-            $contract_env = env('CONTRACT_DATA');
-            $contract_data = $contract_env ? explode(',', $contract_env)[$region->id - 1] ?? " ______ '______' ___________ 2025 й"
-                : " ______ '______' ___________ 2025 й";
+
+            // Report davri boshlanish va tugash sanalari
+            $report_start = $days->first()->created_at->format('Y-m-d');
+            $report_end   = $days->last()->created_at->format('Y-m-d');
+
+            // Amaldagi shartnomani bazadan olish
+            $activeContract = KindgardenContract::where('kindgarden_id', $kindgar->id)
+                ->where('start_date', '<=', $report_start)
+                ->where(function ($q) use ($report_end) {
+                    $q->whereNull('end_date')->orWhere('end_date', '>=', $report_end);
+                })
+                ->orderBy('start_date', 'desc')
+                ->first();
+
+            if ($activeContract) {
+                $contract_data = $activeContract->contract_number . " «" .
+                    $activeContract->contract_date->format('d') . "» " .
+                    $activeContract->contract_date->translatedFormat('F Y') . " й";
+            } else {
+                $contract_env = env('CONTRACT_DATA');
+                $contract_data = $contract_env
+                    ? (explode(',', $contract_env)[$region->id - 1] ?? " ______ '______' ___________ й")
+                    : " ______ '______' ___________ й";
+            }
+
+            // Amaldagi rekvizitlarni bazadan olish
+            $activeRequisite = KindgardenRequisite::where('kindgarden_id', $kindgar->id)
+                ->where('start_date', '<=', $report_start)
+                ->where(function ($q) use ($report_end) {
+                    $q->whereNull('end_date')->orWhere('end_date', '>=', $report_end);
+                })
+                ->orderBy('start_date', 'desc')
+                ->first();
 
             $buyurtmachi = [
-                'company_name' => $region->region_name . ' ММТБга тасарруфидаги ' . $kindgar->number_of_org . '-сонли ДМТТ' ?? '',
-                'address' => $region->region_name,
-                'inn' => '________________',
-                'bank_account' => '___________________________________',
-                'mfo' => '00014',
-                'account_number' => '23402000300100001010',
-                'treasury_account' => '_______________',
-                'treasury_inn' => '________________',
-                'bank' => 'Марказий банк ХККМ',
-                'phone' => '__________________________',
+                'company_name'     => $region->region_name . ' ММТБга тасарруфидаги ' . $kindgar->number_of_org . '-сонли ДМТТ',
+                'address'          => $activeRequisite
+                    ? $region->region_name . ', ' . $activeRequisite->address
+                    : $region->region_name,
+                'inn'              => $activeRequisite->inn ?? '________________',
+                'bank_account'     => $activeRequisite->bank_account ?? '___________________________________',
+                'mfo'              => $activeRequisite->mfo ?? '00014',
+                'treasury_account' => $activeRequisite->treasury_account ?? '_______________',
+                'bank'             => $activeRequisite->bank ?? 'Марказий банк ХККМ',
+                'director_name'    => $activeRequisite->director_name ?? '',
+                'director_phone'   => $activeRequisite->director_phone ?? '__________________________',
+                'phone'            => $activeRequisite->director_phone ?? '__________________________',
             ];
 
             if (is_null(env('INVOICE_NUMBER'))) {
@@ -3460,6 +3494,100 @@ class AccountantController extends Controller
                 $menu_counter++;
             }
         }
+    }
+
+    // ===================== SHARTNOMALAR =====================
+
+    public function shartnomalar()
+    {
+        $kindgardens = Kindgarden::orderBy('number_of_org')->get();
+        $shartnomalar = KindgardenContract::with('kindgarden')->orderBy('kindgarden_id')->orderBy('start_date', 'desc')->get();
+        return view('accountant.shartnomalar', compact('kindgardens', 'shartnomalar'));
+    }
+
+    public function storeShartnoma(Request $request)
+    {
+        KindgardenContract::create([
+            'kindgarden_id'   => $request->kindgarden_id,
+            'contract_number' => $request->contract_number,
+            'contract_date'   => $request->contract_date,
+            'start_date'      => $request->start_date,
+            'end_date'        => $request->end_date ?: null,
+        ]);
+        return back()->with('success', 'Shartnoma qo\'shildi');
+    }
+
+    public function updateShartnoma(Request $request)
+    {
+        $shartnoma = KindgardenContract::findOrFail($request->id);
+        $shartnoma->update([
+            'kindgarden_id'   => $request->kindgarden_id,
+            'contract_number' => $request->contract_number,
+            'contract_date'   => $request->contract_date,
+            'start_date'      => $request->start_date,
+            'end_date'        => $request->end_date ?: null,
+        ]);
+        return back()->with('success', 'Shartnoma yangilandi');
+    }
+
+    public function deleteShartnoma(Request $request)
+    {
+        KindgardenContract::findOrFail($request->id)->delete();
+        return back()->with('success', 'Shartnoma o\'chirildi');
+    }
+
+    // ===================== REKVIZITLAR =====================
+
+    public function rekvizitlar()
+    {
+        $kindgardens = Kindgarden::orderBy('number_of_org')->get();
+        $rekvizitlar = KindgardenRequisite::with('kindgarden')->orderBy('kindgarden_id')->orderBy('start_date', 'desc')->get();
+        return view('accountant.rekvizitlar', compact('kindgardens', 'rekvizitlar'));
+    }
+
+    public function storeRekvizit(Request $request)
+    {
+        KindgardenRequisite::create([
+            'kindgarden_id'    => $request->kindgarden_id,
+            'director_name'    => $request->director_name,
+            'director_phone'   => $request->director_phone,
+            'reception_phone'  => $request->reception_phone,
+            'address'          => $request->address,
+            'inn'              => $request->inn,
+            'bank_account'     => $request->bank_account,
+            'mfo'              => $request->mfo,
+            'treasury_account' => $request->treasury_account,
+            'bank'             => $request->bank,
+            'start_date'       => $request->start_date,
+            'end_date'         => $request->end_date ?: null,
+        ]);
+        return back()->with('success', 'Rekvizit qo\'shildi');
+    }
+
+    public function updateRekvizit(Request $request)
+    {
+        $rekvizit = KindgardenRequisite::findOrFail($request->id);
+        $rekvizit->update([
+            'kindgarden_id'    => $request->kindgarden_id,
+            'director_name'    => $request->director_name,
+            'director_phone'   => $request->director_phone,
+            'reception_phone'  => $request->reception_phone,
+            'address'          => $request->address,
+            'inn'              => $request->inn,
+            'bank_account'     => $request->bank_account,
+            'mfo'              => $request->mfo,
+            'treasury_account' => $request->treasury_account,
+            'bank'             => $request->bank,
+            'start_date'       => $request->start_date,
+            'end_date'         => $request->end_date ?: null,
+        ]);
+        return back()->with('success', 'Rekvizit yangilandi');
+    }
+
+    public function deleteRekvizit(Request $request)
+    {
+        KindgardenRequisite::findOrFail($request->id)->delete();
+        return back()->with('success', 'Rekvizit o\'chirildi');
     }
 
 }

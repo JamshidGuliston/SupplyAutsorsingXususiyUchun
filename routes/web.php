@@ -466,6 +466,18 @@ Route::group(['prefix' => 'accountant', 'middleware' => ['isAccountant', 'auth']
     Route::get('reportRegionSecondaryexcel/{id}/{start}/{end}', [AccountantController::class, 'reportRegionSecondaryexcel'])->name('accountant.reportRegionSecondaryexcel');
     Route::get('reportProductsOfRegion/{id}/{start}/{end}/{ageid}', [AccountantController::class, 'reportProductsOfRegion'])->name('accountant.reportProductsOfRegion');
     Route::get('reportProductsOfRegionexcel/{id}/{start}/{end}/{ageid}', [AccountantController::class, 'reportProductsOfRegionexcel'])->name('accountant.reportProductsOfRegionexcel');
+
+    // Bog'cha shartnomalar (Contracts)
+    Route::get('shartnomalar', [AccountantController::class, 'shartnomalar'])->name('accountant.shartnomalar');
+    Route::post('shartnoma/store', [AccountantController::class, 'storeShartnoma'])->name('accountant.shartnoma.store');
+    Route::post('shartnoma/update', [AccountantController::class, 'updateShartnoma'])->name('accountant.shartnoma.update');
+    Route::delete('shartnoma/delete', [AccountantController::class, 'deleteShartnoma'])->name('accountant.shartnoma.delete');
+
+    // Bog'cha rekvizitlar (Requisites)
+    Route::get('rekvizitlar', [AccountantController::class, 'rekvizitlar'])->name('accountant.rekvizitlar');
+    Route::post('rekvizit/store', [AccountantController::class, 'storeRekvizit'])->name('accountant.rekvizit.store');
+    Route::post('rekvizit/update', [AccountantController::class, 'updateRekvizit'])->name('accountant.rekvizit.update');
+    Route::delete('rekvizit/delete', [AccountantController::class, 'deleteRekvizit'])->name('accountant.rekvizit.delete');
 });
 
 Route::group(['prefix' => 'casher', 'middleware' => ['isChasher', 'auth']], function () {

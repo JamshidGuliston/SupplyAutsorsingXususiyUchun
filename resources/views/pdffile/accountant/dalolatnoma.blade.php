@@ -9,7 +9,7 @@
             margin: 10mm;
             size: A4;
         }
-        
+
         body {
             font-family: 'DejaVu Sans', Arial, sans-serif;
             margin: 0;
@@ -18,164 +18,157 @@
             line-height: 1.4;
             color: #000;
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 25px;
         }
-        
+
         .work-title {
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 10px;
         }
-        
+
         .act-title {
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 15px;
         }
-        
+
         .act-number {
             font-size: 16px;
             font-weight: bold;
             margin-bottom: 10px;
         }
-        
+
         .date-info {
             display: flex;
             justify-content: space-between;
             margin-bottom: 20px;
             font-size: 16px;
         }
-        
+
         .city {
             text-align: left;
         }
-        
+
         .date {
             text-align: right;
         }
-        
+
         .intro-text {
             margin-bottom: 20px;
             font-size: 16px;
             line-height: 1.5;
         }
-        
+
         .table-container {
             margin: 20px 0;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
             font-size: 16px;
         }
-        
+
         th, td {
             border: 1px solid #000;
             padding: 12px 8px;
             text-align: center;
             vertical-align: middle;
         }
-        
+
         th {
             background-color: #f0f0f0;
             font-weight: bold;
             font-size: 16px;
         }
-        
+
         .number-col {
             width: 8%;
         }
-        
+
         .work-name-col {
             width: 60%;
             text-align: left;
         }
-        
+
         .amount-col {
             width: 32%;
             text-align: right;
         }
-        
+
         .total-row {
             font-weight: bold;
             background-color: #f8f9fa;
         }
-        
+
         .total-row td {
             text-align: center;
         }
-        
+
         .summary-text {
             margin: 20px 0;
             font-size: 16px;
             line-height: 1.5;
         }
-        
+
         .amount-text {
             font-weight: bold;
             font-size: 18px;
         }
-        
+
         .written-amount {
             font-style: italic;
         }
-        
+
         .signature-section {
             margin-top: 40px;
             display: flex;
             justify-content: space-between;
         }
-        
+
         .signature-block {
             width: 45%;
             text-align: left;
         }
-        
+
         .signature-title {
             font-weight: bold;
             font-size: 16px;
             margin-bottom: 10px;
         }
-        
+
         .signature-info {
             margin-bottom: 5px;
             font-size: 15px;
         }
         .footer {
             margin-top: 30px;
-            display: table;
-            width: 100%;
+            text-align: center;
         }
-        
-        .footer-section {
-            display: table-cell;
-            width: 48%;
-            vertical-align: top;
-            padding-right: 2%;
-        }
+
         .signature-line {
             border-bottom: 1px solid #000;
             width: 200px;
-            margin: 20px 0 5px 0;
+            margin: 20px auto 5px auto;
         }
-        
+
         .text-center {
             text-align: center;
         }
-        
+
         .text-right {
             text-align: right;
         }
-        
+
         .text-left {
             text-align: left;
         }
-        
+
         .font-bold {
             font-weight: bold;
         }
@@ -194,7 +187,7 @@
 
     <!-- Kirish matni -->
     <div class="intro-text">
-        Бизлар қуйидаги имзо чекувчилар {{ $autorser['company_name'] ?? 'ASIA BEST DISTRIBUTION SERVICE' }} директори {{ $autorser['company_director'] ?? 'B.Tajibaev' }} бир томондан ва {{ $buyurtmachi['company_name'] ?? 'Олмалик шахар 3-сони ДМТТ директори' }} директори: __________________________ иккинчи томондан {{ $contract_data ?? '25111006442027' }} шартнома асосида қуйидаги миқдорда иш бажарилганлиги ҳақида туздик:
+        Бизлар қуйидаги имзо чекувчилар <strong>{{ $buyurtmachi['company_name'] ?? '' }}</strong> директори: __________________________ бир томондан {{ $contract_data ?? '______ \'______\' ___________ й' }} шартнома асосида қуйидаги миқдорда иш бажарилганлиги ҳақида туздик:
     </div>
 
     <!-- Jadval -->
@@ -212,7 +205,7 @@
                     $total_amount = 0;
                     $tr = 1;
                 @endphp
-                
+
                 @foreach($kindgar->age_range as $age)
                 <tr>
                     <td class="number-col">{{ $tr++ }}</td>
@@ -228,7 +221,7 @@
                     </td>
                 </tr>
                 @endforeach
-                
+
                 <tr>
                     <td class="number-col">{{ $tr++ }}</td>
                     <td class="work-name-col">Аутсорсинг хизмати ({{ $costs[$age->id]->raise ?? '0' }}%)</td>
@@ -258,19 +251,12 @@
 
     <!-- Imzo qismi -->
     <div class="footer">
-        <div class="footer-section">
-            <div class="signature-title">Аутсорсер:</div>
-            <div class="signature-info">{{ $autorser['company_name'] ?? 'ASIA BEST DISTRIBUTION SERVICE' }}</div>
-            <div class="signature-info">директори: {{ $autorser['company_director'] ?? 'B.Tajibaev' }}</div>
-            <div class="signature-line"></div>
-        </div>
-        
-        <div class="footer-section">
+        <div class="text-center">
             <div class="signature-title">Истемолчи:</div>
-            <div class="signature-info">{{ $kindgar->number_of_org ?? '3' }}-сон ДМТТ</div>
+            <div class="signature-info font-bold">{{ $buyurtmachi['company_name'] ?? '' }}</div>
             <div class="signature-info">Директори</div>
             <div class="signature-line"></div>
         </div>
     </div>
 </body>
-</html> 
+</html>
