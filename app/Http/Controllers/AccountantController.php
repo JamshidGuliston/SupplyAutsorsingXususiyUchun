@@ -2872,8 +2872,13 @@ class AccountantController extends Controller
             // Optimizatsiya: Barcha kerakli ma'lumotlarni cache qilish
             $this->preloadAllData($id, $start, $end, $kindgar, $days);
 
+            // Tanlangan hujjat turlari (docs query param orqali)
+            $selectedDocs = $request->has('docs')
+                ? array_filter(array_map('trim', explode(',', $request->get('docs'))))
+                : ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'menu'];
+
             // Optimizatsiya: Barcha PDF'larni parallel yaratish
-            $pdfFiles = $this->createPdfsInParallel($kindgar, $region, $days, $start, $end, $id, $tempDir, $timestamp, $contract_data, $buyurtmachi, $invoice_number, $invoice_date, $costs_common, $ages);
+            $pdfFiles = $this->createPdfsInParallel($kindgar, $region, $days, $start, $end, $id, $tempDir, $timestamp, $contract_data, $buyurtmachi, $invoice_number, $invoice_date, $costs_common, $ages, $selectedDocs);
             // PDF'larni birlashtirish uchun Ghostscript ishlatish
             $outputFile = $tempDir . '/combined_' . $kindgar->number_of_org . '_' . $timestamp . '.pdf';
 
@@ -3218,132 +3223,146 @@ class AccountantController extends Controller
      * PDF yaratish jarayonini optimizatsiya qilish
      * Barcha PDF'larni parallel yaratish
      */
-    private function createPdfsInParallel($kindgar, $region, $days, $start, $end, $id, $tempDir, $timestamp, $contract_data, $buyurtmachi, $invoice_number, $invoice_date, $costs_common, $ages)
+    private function createPdfsInParallel($kindgar, $region, $days, $start, $end, $id, $tempDir, $timestamp, $contract_data, $buyurtmachi, $invoice_number, $invoice_date, $costs_common, $ages, $selectedDocs = null)
     {
+        if ($selectedDocs === null) {
+            $selectedDocs = ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'menu'];
+        }
+
         $pdfFiles = [];
 
         // 1. Schotfakturthird PDF yaratish
-        $costs_schotfaktur = [];
-        $total_number_children_schotfaktur = [];
-        foreach ($kindgar->age_range as $age) {
-            $costs_schotfaktur[$age->id] = $this->getCachedProtsent($kindgar->region_id, $age->id, $days->last()->created_at->format('Y-m-d'));
+        if (in_array('schotfaktur', $selectedDocs)) {
+            $costs_schotfaktur = [];
+            $total_number_children_schotfaktur = [];
+            foreach ($kindgar->age_range as $age) {
+                $costs_schotfaktur[$age->id] = $this->getCachedProtsent($kindgar->region_id, $age->id, $days->last()->created_at->format('Y-m-d'));
 
-            $total_number_children_schotfaktur[$age->id] = 0;
-            foreach ($days as $day) {
-                $cachedChildren = $this->getCachedNumberChildren($day->id, $age->id);
-                if ($cachedChildren) {
-                    $total_number_children_schotfaktur[$age->id] += $cachedChildren->sum('kingar_children_number');
+                $total_number_children_schotfaktur[$age->id] = 0;
+                foreach ($days as $day) {
+                    $cachedChildren = $this->getCachedNumberChildren($day->id, $age->id);
+                    if ($cachedChildren) {
+                        $total_number_children_schotfaktur[$age->id] += $cachedChildren->sum('kingar_children_number');
+                    }
                 }
             }
+
+            $pdf_schotfaktur = \PDF::loadView('pdffile.accountant.schotfakturthird', [
+                'contract_data' => $contract_data,
+                'region' => $region,
+                'costs' => $costs_schotfaktur,
+                'days' => $days,
+                'kindgar' => $kindgar,
+                'autorser' => config('company.autorser'),
+                'buyurtmachi' => $buyurtmachi,
+                'invoice_number' => $invoice_number,
+                'invoice_date' => $invoice_date,
+                'total_number_children' => $total_number_children_schotfaktur
+            ]);
+            $this->setPdfOptions($pdf_schotfaktur, 'A4', 'landscape');
+
+            $file_schotfaktur = $tempDir . '/4_schotfaktur_' . $timestamp . '.pdf';
+            file_put_contents($file_schotfaktur, $pdf_schotfaktur->output());
+            $pdfFiles[] = $file_schotfaktur;
         }
-
-        $pdf_schotfaktur = \PDF::loadView('pdffile.accountant.schotfakturthird', [
-            'contract_data' => $contract_data,
-            'region' => $region,
-            'costs' => $costs_schotfaktur,
-            'days' => $days,
-            'kindgar' => $kindgar,
-            'autorser' => config('company.autorser'),
-            'buyurtmachi' => $buyurtmachi,
-            'invoice_number' => $invoice_number,
-            'invoice_date' => $invoice_date,
-            'total_number_children' => $total_number_children_schotfaktur
-        ]);
-        $this->setPdfOptions($pdf_schotfaktur, 'A4', 'landscape');
-
-        $file_schotfaktur = $tempDir . '/4_schotfaktur_' . $timestamp . '.pdf';
-        file_put_contents($file_schotfaktur, $pdf_schotfaktur->output());
-        $pdfFiles[] = $file_schotfaktur;
 
         // 2. Dalolatnoma PDF yaratish
-        $costs_dalolatnoma = [];
-        $total_number_children_dalolatnoma = [];
-        foreach ($kindgar->age_range as $age) {
-            $costs_dalolatnoma[$age->id] = $this->getCachedProtsent($kindgar->region_id, $age->id, $days->last()->created_at->format('Y-m-d'));
+        if (in_array('dalolatnoma', $selectedDocs)) {
+            $costs_dalolatnoma = [];
+            $total_number_children_dalolatnoma = [];
+            foreach ($kindgar->age_range as $age) {
+                $costs_dalolatnoma[$age->id] = $this->getCachedProtsent($kindgar->region_id, $age->id, $days->last()->created_at->format('Y-m-d'));
 
-            $total_number_children_dalolatnoma[$age->id] = 0;
-            foreach ($days as $day) {
-                $cachedChildren = $this->getCachedNumberChildren($day->id, $age->id);
-                if ($cachedChildren) {
-                    $total_number_children_dalolatnoma[$age->id] += $cachedChildren->sum('kingar_children_number');
+                $total_number_children_dalolatnoma[$age->id] = 0;
+                foreach ($days as $day) {
+                    $cachedChildren = $this->getCachedNumberChildren($day->id, $age->id);
+                    if ($cachedChildren) {
+                        $total_number_children_dalolatnoma[$age->id] += $cachedChildren->sum('kingar_children_number');
+                    }
                 }
             }
+
+            $pdf_dalolatnoma = \PDF::loadView('pdffile.accountant.dalolatnoma', [
+                'contract_data' => $contract_data,
+                'costs' => $costs_dalolatnoma,
+                'days' => $days,
+                'kindgar' => $kindgar,
+                'autorser' => config('company.autorser'),
+                'buyurtmachi' => $buyurtmachi,
+                'invoice_number' => $invoice_number,
+                'invoice_date' => $invoice_date,
+                'total_number_children' => $total_number_children_dalolatnoma
+            ]);
+            $this->setPdfOptions($pdf_dalolatnoma, 'A4', 'portrait');
+
+            $file_dalolatnoma = $tempDir . '/3_dalolatnoma_' . $timestamp . '.pdf';
+            file_put_contents($file_dalolatnoma, $pdf_dalolatnoma->output());
+            $pdfFiles[] = $file_dalolatnoma;
         }
-
-        $pdf_dalolatnoma = \PDF::loadView('pdffile.accountant.dalolatnoma', [
-            'contract_data' => $contract_data,
-            'costs' => $costs_dalolatnoma,
-            'days' => $days,
-            'kindgar' => $kindgar,
-            'autorser' => config('company.autorser'),
-            'buyurtmachi' => $buyurtmachi,
-            'invoice_number' => $invoice_number,
-            'invoice_date' => $invoice_date,
-            'total_number_children' => $total_number_children_dalolatnoma
-        ]);
-        $this->setPdfOptions($pdf_dalolatnoma, 'A4', 'portrait');
-
-        $file_dalolatnoma = $tempDir . '/3_dalolatnoma_' . $timestamp . '.pdf';
-        file_put_contents($file_dalolatnoma, $pdf_dalolatnoma->output());
-        $pdfFiles[] = $file_dalolatnoma;
 
         // 3. Transportation PDF yaratish
-        $number_childrens = [];
-        foreach ($days as $day) {
-            foreach ($ages as $age) {
-                $cachedChildren = $this->getCachedNumberChildren($day->id, $age->id);
-                if ($cachedChildren) {
-                    $child = $cachedChildren->first();
-                    // Menu nomini olish
-                    $menu = $this->getCachedMenu($day->id, $age->id);
-                    if ($menu && $menu->count() > 0) {
-                        $child->menu_name = $menu->first()->menu_name ?? '';
+        if (in_array('transportation', $selectedDocs)) {
+            $number_childrens = [];
+            foreach ($days as $day) {
+                foreach ($ages as $age) {
+                    $cachedChildren = $this->getCachedNumberChildren($day->id, $age->id);
+                    if ($cachedChildren) {
+                        $child = $cachedChildren->first();
+                        // Menu nomini olish
+                        $menu = $this->getCachedMenu($day->id, $age->id);
+                        if ($menu && $menu->count() > 0) {
+                            $child->menu_name = $menu->first()->menu_name ?? '';
+                        }
+                        else {
+                            $child->menu_name = '';
+                        }
+                        $number_childrens[$day->id][$age->id] = $child;
                     }
                     else {
-                        $child->menu_name = '';
+                        $number_childrens[$day->id][$age->id] = null;
                     }
-                    $number_childrens[$day->id][$age->id] = $child;
-                }
-                else {
-                    $number_childrens[$day->id][$age->id] = null;
                 }
             }
+
+            $pdf_transportation = \PDF::loadView('pdffile.accountant.transportation', [
+                'days' => $days,
+                'costs' => $costs_common,
+                'number_childrens' => $number_childrens,
+                'kindgar' => $kindgar,
+                'ages' => $ages
+            ]);
+            $this->setPdfOptions($pdf_transportation, 'A3', 'landscape', true);
+
+            $file_transportation = $tempDir . '/2_transportation_' . $timestamp . '.pdf';
+            file_put_contents($file_transportation, $pdf_transportation->output());
+            $pdfFiles[] = $file_transportation;
         }
 
-        $pdf_transportation = \PDF::loadView('pdffile.accountant.transportation', [
-            'days' => $days,
-            'costs' => $costs_common,
-            'number_childrens' => $number_childrens,
-            'kindgar' => $kindgar,
-            'ages' => $ages
-        ]);
-        $this->setPdfOptions($pdf_transportation, 'A3', 'landscape', true);
-
-        $file_transportation = $tempDir . '/2_transportation_' . $timestamp . '.pdf';
-        file_put_contents($file_transportation, $pdf_transportation->output());
-        $pdfFiles[] = $file_transportation;
-
         // 4. Nakapit without cost PDF'larni yaratish
-        foreach ($kindgar->age_range as $age) {
-            $nakproducts_without = $this->getNakapitWithoutCostData($id, $age->id, $start, $end);
-            $protsent_without = $this->getCachedProtsent($kindgar->region_id, $age->id, $days->last()->created_at->format('Y-m-d'));
+        if (in_array('nakapit', $selectedDocs)) {
+            foreach ($kindgar->age_range as $age) {
+                $nakproducts_without = $this->getNakapitWithoutCostData($id, $age->id, $start, $end);
+                $protsent_without = $this->getCachedProtsent($kindgar->region_id, $age->id, $days->last()->created_at->format('Y-m-d'));
 
-            $pdf_without = \PDF::loadView('pdffile.accountant.nakapitwithoutcost', [
-                'age' => $age,
-                'days' => $days,
-                'nakproducts' => $nakproducts_without,
-                'kindgar' => $kindgar,
-                'protsent' => $protsent_without
-            ]);
-            $this->setPdfOptionsForNakapitWithoutCost($pdf_without, 'A4', 'portrait');
+                $pdf_without = \PDF::loadView('pdffile.accountant.nakapitwithoutcost', [
+                    'age' => $age,
+                    'days' => $days,
+                    'nakproducts' => $nakproducts_without,
+                    'kindgar' => $kindgar,
+                    'protsent' => $protsent_without
+                ]);
+                $this->setPdfOptionsForNakapitWithoutCost($pdf_without, 'A4', 'portrait');
 
-            $file_without = $tempDir . '/1_nakapit_without_' . $age->id . '_' . $timestamp . '.pdf';
-            file_put_contents($file_without, $pdf_without->output());
-            $pdfFiles[] = $file_without;
+                $file_without = $tempDir . '/1_nakapit_without_' . $age->id . '_' . $timestamp . '.pdf';
+                file_put_contents($file_without, $pdf_without->output());
+                $pdfFiles[] = $file_without;
+            }
         }
 
         // 5. Menyu PDF'larni yaratish
-        $this->createMenuPdfs($kindgar, $days, $start, $end, $id, $tempDir, $timestamp, $pdfFiles);
+        if (in_array('menu', $selectedDocs)) {
+            $this->createMenuPdfs($kindgar, $days, $start, $end, $id, $tempDir, $timestamp, $pdfFiles);
+        }
 
         return $pdfFiles;
     }

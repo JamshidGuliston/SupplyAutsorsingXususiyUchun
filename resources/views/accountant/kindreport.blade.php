@@ -301,6 +301,63 @@
     </div>
 </div>
 <!-- EDIT -->
+
+<!-- Combined Documents Selection Modal -->
+<div class="modal fade" id="combinedDocsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-file-pdf me-2"></i>Birlashtirilgan PDF uchun hujjatlarni tanlang</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Quyidagi hujjatlardan PDFga kiritmoqchi bo'lganlarini belgilang:</p>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="doc_schotfaktur" value="schotfaktur" checked>
+                    <label class="form-check-label fw-semibold" for="doc_schotfaktur">
+                        <i class="fas fa-file-invoice-dollar text-primary me-1"></i> СЧЁТ-ФАКТУРА
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="doc_dalolatnoma" value="dalolatnoma" checked>
+                    <label class="form-check-label fw-semibold" for="doc_dalolatnoma">
+                        <i class="fas fa-file-signature text-success me-1"></i> ДАЛОЛАТНОМА
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="doc_transportation" value="transportation" checked>
+                    <label class="form-check-label fw-semibold" for="doc_transportation">
+                        <i class="fas fa-users text-info me-1"></i> ҚАТНОВ
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="doc_nakapit" value="nakapit" checked>
+                    <label class="form-check-label fw-semibold" for="doc_nakapit">
+                        <i class="fas fa-apple-alt text-warning me-1"></i> САРФЛАНГАН ОЗИҚ-ОВҚАТ МАҲСУЛОТЛАР
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="doc_menu" value="menu" checked>
+                    <label class="form-check-label fw-semibold" for="doc_menu">
+                        <i class="fas fa-utensils text-danger me-1"></i> МЕНЮЛАР
+                    </label>
+                </div>
+                <div class="d-flex gap-2 mt-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleAllDocs(true)">Barchasini belgilash</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleAllDocs(false)">Barchasini olib tashlash</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                <button type="button" class="btn btn-danger" onclick="generateCombinedPdf()">
+                    <i class="far fa-file-pdf me-1"></i> PDF yaratish
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Combined Docs Modal -->
+
 <div class="py-4 px-4">
     <div class="row">
         <div class="col-md-9">
@@ -509,9 +566,9 @@
             html += '<div class="report-category">';
             html += '<h6><i class="fas fa-file-invoice-dollar"></i> Умумий</h6>';
             html += '<div class="report-links">';
-            html += '<a href="/accountant/combined-documents/'+kindid+'/'+start+'/'+end+'/'+cost+'" target="_blank" class="report-link pdf">';
+            html += '<button type="button" class="report-link pdf" onclick="openCombinedModal(\''+kindid+'\',\''+start+'\',\''+end+'\',\''+cost+'\')">';
             html += '<i class="far fa-file-pdf"></i>PDF';
-            html += '</a>';
+            html += '</button>';
             html += '<a href="/accountant/combined-documentsexcel/'+kindid+'/'+start+'/'+end+'/'+cost+'" target="_blank" class="report-link excel">';
             html += '<i class="far fa-file-excel"></i>Excel';
             html += '</a>';
@@ -528,6 +585,40 @@
             div.html(html);
         }
     }
+
+    var _combinedKindid, _combinedStart, _combinedEnd, _combinedCost;
+
+    function openCombinedModal(kindid, start, end, cost) {
+        _combinedKindid = kindid;
+        _combinedStart  = start;
+        _combinedEnd    = end;
+        _combinedCost   = cost;
+        var modal = new bootstrap.Modal(document.getElementById('combinedDocsModal'));
+        modal.show();
+    }
+
+    function generateCombinedPdf() {
+        var selectedDocs = [];
+        ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'menu'].forEach(function(doc) {
+            if (document.getElementById('doc_' + doc).checked) {
+                selectedDocs.push(doc);
+            }
+        });
+        if (selectedDocs.length === 0) {
+            alert("Kamida bitta hujjat turini tanlang!");
+            return;
+        }
+        var url = '/accountant/combined-documents/' + _combinedKindid + '/' + _combinedStart + '/' + _combinedEnd + '/' + _combinedCost + '?docs=' + selectedDocs.join(',');
+        window.open(url, '_blank');
+        bootstrap.Modal.getInstance(document.getElementById('combinedDocsModal')).hide();
+    }
+
+    function toggleAllDocs(state) {
+        ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'menu'].forEach(function(doc) {
+            document.getElementById('doc_' + doc).checked = state;
+        });
+    }
+
     $('.edites').click(function() {
         var regid = $(this).attr('data-regionid');
         var dayid = $(this).attr('data-dayid');

@@ -254,15 +254,6 @@
 	
 	<div class="footer-section">
 		<div class="footer-column">
-			<strong>Аутсорсер:</strong><br>
-			{{ env('COMPANY_NAME') ?? 'B.Tajibaev' }}<br>
-			директори: {{ env('COMPANY_DIRECTOR') ?? 'B.Tajibaev' }} ________________________
-		    <br/>
-			<br/>
-			<br/>
-			<strong>Бухгалтер:</strong> ____________________
-		</div>
-		<div class="footer-column">
 			<strong>{{ $kindgar->number_of_org ?? '3' }}-сон ДМТТ рахбари:</strong> ____________________
 			<br/>
 			<br/>
