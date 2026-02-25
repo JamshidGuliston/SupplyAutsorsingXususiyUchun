@@ -832,7 +832,7 @@ class AccountantController extends Controller
             'UTF-8'
         );
         $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
         $dompdf->stream('yukxat_' . $start . '_' . $end . '.pdf', ['Attachment' => 0]);
     }

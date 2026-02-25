@@ -102,7 +102,7 @@
                             <th style="width: 10px;">Сана</th>
                             <!-- <th style="width: 30px; font-size: 7px"><bold>Нарх</bold></th> -->
                             @foreach($days as $day)
-								<th scope="col">{{ $day->day_number; }}</th>
+								<th scope="col">{{ $day->day_number }}</th>
 							@endforeach
 							<th>Жами</th>
                         </tr>

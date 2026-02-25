@@ -97,8 +97,7 @@
                 <b>Юк хати &nbsp;&nbsp;&nbsp;&nbsp; № _____ &nbsp;&nbsp;&nbsp;&nbsp; Сана:
                     ____-____-{{ $fromDay->year_name ?? '' }}</b>
             </center>
-            Кимдан: <b>{{ env('COMPANY_NAME', 'KOMPANIYA') }}</b><br>
-            Кимга: <b>{{ $kindgar->number_of_org ?? '' }}</b>
+            <b>{{ $kindgar->number_of_org ?? '' }}</b>
         </div>
 
         <table style="width:100%; table-layout: fixed;">
