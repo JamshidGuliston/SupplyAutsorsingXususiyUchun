@@ -9,7 +9,7 @@
     <style>
         @page {
             margin: 0.2in 0.8in 0.2in 0.3in;
-            size: A4 landscape;
+            size: A4 portrait;
         }
 
         body {
@@ -18,7 +18,7 @@
             background-position: top left;
             background-repeat: no-repeat;
             background-size: 100%;
-            width: 45%;
+            width: 100%;
         }
 
         table {
