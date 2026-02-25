@@ -55,7 +55,7 @@ Route::group(['prefix' => 'admin'], function () {
 
 Auth::routes();
 
-$globalroutes =  function () {
+$globalroutes = function () {
     Route::get('getbotusers', [TechnologController::class, 'getbotusers']);
 };
 
@@ -128,7 +128,7 @@ Route::group(['prefix' => 'storage', 'middleware' => ['isStorage', 'auth']], fun
     Route::post('editegroup', [StorageController::class, 'editegroup'])->name('storage.editegroup');
     Route::post('addrasxodgroup', [StorageController::class, 'addrasxodgroup'])->name('storage.addrasxodgroup');
     Route::post('plusproduct', [StorageController::class, 'plusproduct'])->name('storage.plusproduct');
-    
+
     Route::get('changesome', [StorageController::class, 'changesome']);
 
     Route::post('confirmorder', [StorageController::class, 'right'])->name('storage.confirmorder');
@@ -166,7 +166,7 @@ Route::group(['prefix' => 'storage', 'middleware' => ['isStorage', 'auth']], fun
 Route::group(['prefix' => 'technolog', 'middleware' => ['isTechnolog', 'auth']], function () {
     Route::get('tabassum/{start}/{end}', [TechnologController::class, 'tabassum'])->name('tabassum');
     Route::get('funtest', [TechnologController::class, 'funtest']);
-    Route::get('asdf', [TechnologController::class, 'asdf'] );
+    Route::get('asdf', [TechnologController::class, 'asdf']);
     Route::get('home', [TechnologController::class, 'index'])->name('technolog.home');
     Route::get('bolalar-qatnovi', [TechnologController::class, 'bolalarQatnovi'])->name('technolog.bolalar_qatnovi');
     Route::post('get-bolalar-qatnovi-data', [TechnologController::class, 'getBolalarQatnoviData'])->name('technolog.getBolalarQatnoviData');
@@ -302,17 +302,17 @@ Route::group(['prefix' => 'technolog', 'middleware' => ['isTechnolog', 'auth']],
     Route::post('updatechef', [TechnologController::class, 'updatechef'])->name('updatechef');
     Route::get('chefgetproducts', [TechnologController::class, 'chefgetproducts'])->name('technolog.chefgetproducts');
     Route::post('chefeditproductw', [TechnologController::class, 'chefeditproductw'])->name('technolog.chefeditproductw');
-    
+
     Route::get('createnextdaypdf', [TestController::class, 'createnextdaypdf'])->name('technolog.createnextdaypdf');
     Route::get('createnewdaypdf/{id}', [TestController::class, 'createnewdaypdf'])->name('technolog.createnewdaypdf');
     Route::delete('deletegarden', [TechnologController::class, 'deleteGarden'])->name('deletegarden');
-    
+
     Route::get('finding/{id}', [TechnologController::class, 'finding']);
-    
+
     Route::get('updatemanu', [TechnologController::class, 'updatemanu']);
     Route::post('editactivemanu', [TechnologController::class, 'editactivemanu'])->name('technolog.editactivemanu');
     Route::get('getactivemenuproducts', [TechnologController::class, 'getactivemenuproducts']);
-    
+
     Route::get('pagecreateproduct', [TechnologController::class, 'pageCreateProduct']);
     Route::post('createproduct', [TechnologController::class, 'createproduct'])->name('createproduct');
 
@@ -326,7 +326,7 @@ Route::group(['prefix' => 'technolog', 'middleware' => ['isTechnolog', 'auth']],
         Route::put('/{id}', [CertificateController::class, 'update'])->name('update');
         Route::delete('/{id}', [CertificateController::class, 'destroy'])->name('destroy');
     });
-    
+
     // Muassasalar (Bog'chalar) boshqaruvi
     Route::get('muassasalar', [TechnologController::class, 'muassasalar'])->name('technolog.muassasalar');
     Route::get('addmuassasa', [TechnologController::class, 'addmuassasa'])->name('technolog.addmuassasa');
@@ -346,7 +346,7 @@ Route::group(['prefix' => 'technolog', 'middleware' => ['isTechnolog', 'auth']],
     Route::post('/updatetitlemenu', [TechnologController::class, 'updateTitlemenu'])->name('technolog.updateTitlemenu');
     Route::post('/deletetitlemenu', [TechnologController::class, 'deleteTitlemenu'])->name('technolog.deleteTitlemenu');
     Route::get('createKindergartenMenuPDF/{garden_id}/{age_id}/{temp}', [TechnologController::class, 'createKindergartenMenuPDF'])->name('technolog.createKindergartenMenuPDF');
-    
+
     // ... existing routes ...
     // ... existing routes ...
 
@@ -355,14 +355,14 @@ Route::group(['prefix' => 'technolog', 'middleware' => ['isTechnolog', 'auth']],
 
     Route::get('nextdayshopexcel/{id}', [TechnologController::class, 'nextdayshopexcel'])->name('technolog.nextdayshopexcel');
     Route::get('/test-zip-creation', [TechnologController::class, 'testZipCreation']);
-    
+
     // Copy children numbers functionality
     Route::post('copy-children-numbers', [TechnologController::class, 'copyChildrenNumbers'])->name('technolog.copyChildrenNumbers');
     Route::post('restore-children-numbers', [TechnologController::class, 'restoreChildrenNumbers'])->name('technolog.restoreChildrenNumbers');
-    
+
     // Bolalar soni tarixi
     Route::get('children-count-history/{gardenId}/{ageId}', [TechnologController::class, 'getChildrenCountHistory'])->name('technolog.children_count_history');
-    
+
     // Notificationlar
     Route::get('notifications', [TechnologController::class, 'getNotifications'])->name('technolog.notifications');
     Route::post('notifications/{id}/read', [TechnologController::class, 'markNotificationAsRead'])->name('technolog.notification.read');
@@ -377,7 +377,7 @@ Route::group(['prefix' => 'chef', 'middleware' => ['isChef', 'auth']], function 
     Route::post('sendnumbers', [ChefController::class, 'sendnumbers'])->name('chef.sendnumbers');
     Route::post('minusproducts', [ChefController::class, 'minusproducts'])->name('chef.minusproducts');
     Route::post('right', [ChefController::class, 'right'])->name('chef.right');
-    
+
     // Bolalar soni tarixi
     Route::get('children-count-history', [ChefController::class, 'childrenCountHistory'])->name('chef.children_count_history');
     Route::post('update-children-count', [ChefController::class, 'updateChildrenCount'])->name('chef.update_children_count');
@@ -409,10 +409,10 @@ Route::group(['prefix' => 'accountant', 'middleware' => ['isAccountant', 'auth']
     Route::get('schotfakturthirdexcel/{id}/{start}/{end}', [AccountantController::class, 'schotfakturthirdexcel'])->name('accountant.schotfakturthirdexcel');
     Route::get('dalolatnoma/{id}/{start}/{end}', [AccountantController::class, 'dalolatnoma'])->name('accountant.dalolatnoma');
     Route::get('dalolatnomaexcel/{id}/{start}/{end}', [AccountantController::class, 'dalolatnomaexcel'])->name('accountant.dalolatnomaexcel');
-    
+
     // Birlashtirilgan hujjat - barcha 4 ta hujjatni bitta PDF da
     Route::get('combined-documents/{id}/{start}/{end}/{costid?}', [AccountantController::class, 'combinedKindgardenDocuments'])->name('accountant.combined.documents');
-    
+
     Route::get('allschotfaktur/{id}/{start}/{end}/{costid}/{nds}/{ust}', [AccountantController::class, 'allschotfaktur'])->name('accountant.allschotfaktur');
     Route::get('schotfakturexcel/{id}/{ageid}/{start}/{end}/{costid}/{nds}/{ust}', [AccountantController::class, 'schotfakturexcel'])->name('accountant.schotfakturexcel');
     Route::get('norm/{id}/{ageid}/{start}/{end}/{costid}', [AccountantController::class, 'norm'])->name('accountant.norm');
@@ -451,6 +451,9 @@ Route::group(['prefix' => 'accountant', 'middleware' => ['isAccountant', 'auth']
     Route::get('transportationSecondaryexcel/{id}/{start}/{end}/{costid}', [AccountantController::class, 'transportationSecondaryexcel'])->name('accountant.transportationSecondaryexcel');
     Route::get('transportationThird/{id}/{start}/{end}', [AccountantController::class, 'transportationThird'])->name('accountant.transportationThird');
     Route::get('transportationThirdexcel/{id}/{start}/{end}/{costid}', [AccountantController::class, 'transportationThirdexcel'])->name('accountant.transportationThirdexcel');
+
+    // Yuk xati - N kunlik mahsulotlar jami bo'yicha
+    Route::get('yukxat/{id}/{start}/{end}/{days_per_batch}', [AccountantController::class, 'yukxat'])->name('accountant.yukxat');
 
     // reportregion
     Route::get('reportregion/{id}/{start}/{end}', [AccountantController::class, 'reportregion'])->name('accountant.reportregion');
@@ -496,11 +499,11 @@ Route::group(['prefix' => 'casher', 'middleware' => ['isChasher', 'auth']], func
     Route::post('deletecash', [CasherController::class, 'deletecash'])->name('casher.deletecash');
     Route::get('selectallcost/{id}', [CasherController::class, 'selectallcost'])->name('casher.selectallcost');
     Route::get('selectreport/{type}/{id}/{b}/{e}', [CasherController::class, 'selectreport'])->name('casher.selectallcost');
-    
+
 });
 
 Route::group(['prefix' => 'boss', 'middleware' => ['isBoss', 'auth']], function () {
-    Route::get('home', [BossController::class, 'index'])->name('boss.home', ['yearid'=>0, 'monthid'=>0]);
+    Route::get('home', [BossController::class, 'index'])->name('boss.home', ['yearid' => 0, 'monthid' => 0]);
     Route::get('cashe', [BossController::class, 'cashe'])->name('boss.cashe');
     Route::post('accepted', [BossController::class, 'accepted'])->name('boss.accepted');
     Route::get('report', [BossController::class, 'report'])->name('boss.report');
@@ -508,7 +511,7 @@ Route::group(['prefix' => 'boss', 'middleware' => ['isBoss', 'auth']], function 
     Route::get('showincome', [BossController::class, 'showincome'])->name('boss.showincome');
     Route::get('selectallcost/{id}', [CasherController::class, 'selectallcost'])->name('casher.selectallcost');
     Route::get('selectreport/{type}/{id}/{b}/{e}', [CasherController::class, 'selectreport'])->name('casher.selectallcost');
-    
+
 });
 
 

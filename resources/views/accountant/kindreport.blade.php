@@ -342,7 +342,23 @@
                         <i class="fas fa-utensils text-danger me-1"></i> МЕНЮЛАР
                     </label>
                 </div>
-                <div class="d-flex gap-2 mt-2">
+                <!-- Yuk xati section -->
+                <hr class="my-2">
+                <div class="p-2 border rounded bg-light">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="doc_yukxat" value="yukxat">
+                        <label class="form-check-label fw-semibold" for="doc_yukxat">
+                            <i class="fas fa-truck text-secondary me-1"></i> ЮК ХАТИ (alohida ochiladi)
+                        </label>
+                    </div>
+                    <div class="mt-2 ps-4" id="yukxat_days_row">
+                        <label class="form-label small mb-1" for="yukxat_days_input">
+                            <i class="fas fa-calendar-day me-1"></i>Bir yuk xatiga nechta kun:
+                        </label>
+                        <input type="number" id="yukxat_days_input" class="form-control form-control-sm" value="5" min="1" max="31" style="width: 100px;">
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-3">
                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleAllDocs(true)">Barchasini belgilash</button>
                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleAllDocs(false)">Barchasini olib tashlash</button>
                 </div>
@@ -604,12 +620,24 @@
                 selectedDocs.push(doc);
             }
         });
-        if (selectedDocs.length === 0) {
+
+        // Yuk xati ni alohida yangi tabda ochish
+        var yukxatChecked = document.getElementById('doc_yukxat').checked;
+        if (yukxatChecked) {
+            var daysPerBatch = parseInt(document.getElementById('yukxat_days_input').value) || 5;
+            var yukxatUrl = '/accountant/yukxat/' + _combinedKindid + '/' + _combinedStart + '/' + _combinedEnd + '/' + daysPerBatch;
+            window.open(yukxatUrl, '_blank');
+        }
+
+        if (selectedDocs.length === 0 && !yukxatChecked) {
             alert("Kamida bitta hujjat turini tanlang!");
             return;
         }
-        var url = '/accountant/combined-documents/' + _combinedKindid + '/' + _combinedStart + '/' + _combinedEnd + '/' + _combinedCost + '?docs=' + selectedDocs.join(',');
-        window.open(url, '_blank');
+
+        if (selectedDocs.length > 0) {
+            var url = '/accountant/combined-documents/' + _combinedKindid + '/' + _combinedStart + '/' + _combinedEnd + '/' + _combinedCost + '?docs=' + selectedDocs.join(',');
+            window.open(url, '_blank');
+        }
         bootstrap.Modal.getInstance(document.getElementById('combinedDocsModal')).hide();
     }
 
@@ -617,6 +645,8 @@
         ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'menu'].forEach(function(doc) {
             document.getElementById('doc_' + doc).checked = state;
         });
+        // Yuk xati ni ham toggle qilish
+        document.getElementById('doc_yukxat').checked = state;
     }
 
     $('.edites').click(function() {

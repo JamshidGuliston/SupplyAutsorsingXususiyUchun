@@ -132,7 +132,7 @@ class AccountantController extends Controller
             $days->where('id', $row->day_id)->first()->yes = "yes";
             $minusproducts[$row->praduct_name_id][$row->day_id] = $row->price_cost;
             $minusproducts[$row->praduct_name_id]['productname'] = $row->product_name;
-        // $minusproducts[$row->praduct_name_id]['rowid'] = $row->id;
+            // $minusproducts[$row->praduct_name_id]['rowid'] = $row->id;
         }
         // dd($minusproducts);
         $productall = Product::join('sizes', 'sizes.id', '=', 'products.size_name_id')
@@ -223,8 +223,7 @@ class AccountantController extends Controller
         foreach ($costs as $row) {
             if ($row['month_id'] % 12 == 0) {
                 $mth = 12;
-            }
-            else {
+            } else {
                 $mth = $row['month_id'] % 12;
             }
             $id = $row['day_id'];
@@ -249,10 +248,10 @@ class AccountantController extends Controller
             $join = Number_children::where('number_childrens.day_id', $day->id)
                 ->where('kingar_name_id', $id)
                 ->leftjoin('active_menus', function ($join) {
-                // $join->on('day_id', '=', $today);
-                $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-            })
+                    // $join->on('day_id', '=', $today);
+                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                })
                 ->where('active_menus.day_id', $day->id)
                 ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                 ->get();
@@ -291,7 +290,7 @@ class AccountantController extends Controller
                         }
                     }
                     if (isset($workproduct[$key . 'wcount'])) {
-                    // $summ += ($workproduct[$key]*$workproduct[$key.'wcount']) / $workproduct[$key.'div'];
+                        // $summ += ($workproduct[$key]*$workproduct[$key.'wcount']) / $workproduct[$key.'div'];
                     }
                     $childs = Number_children::where('day_id', $day->id)
                         ->where('kingar_name_id', $id)
@@ -348,9 +347,9 @@ class AccountantController extends Controller
                 ->where('kingar_name_id', $id)
                 ->where('king_age_name_id', $ageid)
                 ->leftjoin('active_menus', function ($join) {
-                $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-            })
+                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                })
                 ->where('active_menus.day_id', $day->id)
                 ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                 ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
@@ -424,9 +423,9 @@ class AccountantController extends Controller
                     ->where('kingar_name_id', $id)
                     ->where('king_age_name_id', $age->id)
                     ->leftjoin('active_menus', function ($join) {
-                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-                })
+                        $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                        $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                    })
                     ->where('active_menus.day_id', $day->id)
                     ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                     ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
@@ -446,8 +445,7 @@ class AccountantController extends Controller
                 }
                 if ($age->id != 3) {
                     $foods = titlemenu_food::where('day_id', $day->id - 1)->where('worker_age_id', 4)->get();
-                }
-                else {
+                } else {
                     $foods = [];
                 }
                 foreach ($foods as $food) {
@@ -455,8 +453,8 @@ class AccountantController extends Controller
                         ->where('kingar_name_id', $id)
                         ->where('king_age_name_id', $food->worker_age_id)
                         ->leftjoin('active_menus', function ($join) {
-                        $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                    })
+                            $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                        })
                         ->where('active_menus.day_id', $day->id)
                         ->where('active_menus.age_range_id', $food->worker_age_id)
                         ->where('active_menus.menu_food_id', $food->food_id)
@@ -511,9 +509,9 @@ class AccountantController extends Controller
             $join = Number_children::where('number_childrens.day_id', $day->id)
                 ->where('kingar_name_id', $id)
                 ->leftjoin('active_menus', function ($join) {
-                $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-            })
+                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                })
                 ->where('active_menus.day_id', $day->id)
                 ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                 ->get();
@@ -552,7 +550,7 @@ class AccountantController extends Controller
                         }
                     }
                     if (isset($workproduct[$key . 'wcount'])) {
-                    // $summ += ($workproduct[$key]*$workproduct[$key.'wcount']) / $workproduct[$key.'div'];
+                        // $summ += ($workproduct[$key]*$workproduct[$key.'wcount']) / $workproduct[$key.'div'];
                     }
                     $childs = Number_children::where('day_id', $day->id)
                         ->where('kingar_name_id', $id)
@@ -607,9 +605,9 @@ class AccountantController extends Controller
                 ->where('kingar_name_id', $id)
                 ->where('king_age_name_id', $ageid)
                 ->leftjoin('active_menus', function ($join) {
-                $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-            })
+                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                })
                 ->where('active_menus.day_id', $day->id)
                 ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                 ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
@@ -723,6 +721,122 @@ class AccountantController extends Controller
         return Excel::download(new NakapitWithoutCostExport($request, $id, $ageid, $start, $end), 'nakapit_without_cost_' . date('Y-m-d') . '.xlsx');
     }
 
+    /**
+     * Yuk xati - Hisobot davri barcha yosh guruhlari bo'yicha mahsulotlar sarflanishi
+     * asosida har N kunlik alohida yuk xatlar to'plami generatsiya qilinadi.
+     * 
+     * @param Request $request
+     * @param int $id - Bog'cha id
+     * @param int $start - Boshlanish kun id
+     * @param int $end - Tugash kun id
+     * @param int $days_per_batch - Bir yuk xatidagi kunlar soni
+     */
+    public function yukxat(Request $request, $id, $start, $end, $days_per_batch = 5)
+    {
+        set_time_limit(300);
+
+        $kindgar = Kindgarden::where('id', $id)->first();
+        $region = Region::where('id', $kindgar->region_id)->first();
+
+        // Barcha kunlarni olish
+        $days = Day::where('id', '>=', $start)
+            ->where('id', '<=', $end)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        if ($days->isEmpty()) {
+            abort(404, 'Kunlar topilmadi');
+        }
+
+        // Har bir kun va har bir yosh guruhi bo'yicha mahsulotlarni yig'ish
+        // $allNakproducts[$productId]['product_name'], ['size_name'], [$dayId] = summa
+        $allNakproducts = [];
+
+        foreach ($kindgar->age_range as $age) {
+            foreach ($days as $day) {
+                $join = Number_children::where('number_childrens.day_id', $day->id)
+                    ->where('kingar_name_id', $id)
+                    ->where('king_age_name_id', $age->id)
+                    ->leftjoin('active_menus', function ($j) {
+                        $j->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                        $j->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                    })
+                    ->where('active_menus.day_id', $day->id)
+                    ->join('products', 'active_menus.product_name_id', '=', 'products.id')
+                    ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
+                    ->get();
+
+                foreach ($join as $row) {
+                    $pId = $row->product_name_id;
+                    if (!isset($allNakproducts[$pId][$age->id])) {
+                        $allNakproducts[$pId][$age->id] = 0;
+                    }
+                    $allNakproducts[$pId]['product_name'] = $row->product_name;
+                    $allNakproducts[$pId]['size_name'] = $row->size_name;
+                    $allNakproducts[$pId]['sort'] = $row->sort ?? 999;
+
+                    // Kunlik sarfni hisoblash
+                    $children = $row->kingar_children_number ?? 0;
+                    $div = $row->div ?? 1;
+                    $weight = $row->weight ?? 0;
+                    $dailyKg = ($children > 0 && $div > 0) ? ($weight * $children) / $div : 0;
+
+                    if (!isset($allNakproducts[$pId]['days'][$day->id])) {
+                        $allNakproducts[$pId]['days'][$day->id] = 0;
+                    }
+                    $allNakproducts[$pId]['days'][$day->id] += $dailyKg;
+                }
+            }
+        }
+
+        // Mahsulotlarni sort bo'yicha tartiblaymiz
+        uasort($allNakproducts, function ($a, $b) {
+            return ($a['sort'] ?? 999) <=> ($b['sort'] ?? 999);
+        });
+
+        // Kunlarni N kunlik bo'laklarga ajratish
+        $chunkedDays = $days->chunk($days_per_batch);
+
+        // Har bir chunk uchun mahsulotlar va ularning jami miqdorini hisob
+        $yukxatlar = [];
+        foreach ($chunkedDays as $chunkDays) {
+            $productsForChunk = [];
+            foreach ($allNakproducts as $pId => $pData) {
+                if (!isset($pData['product_name']))
+                    continue;
+
+                $total = 0;
+                foreach ($chunkDays as $day) {
+                    $total += $pData['days'][$day->id] ?? 0;
+                }
+                $productsForChunk[] = [
+                    'product_name' => $pData['product_name'],
+                    'size_name' => $pData['size_name'] ?? '',
+                    'total' => $total,
+                    'sort' => $pData['sort'] ?? 999,
+                    'product_name' => $pData['product_name'],
+                ];
+            }
+
+            $yukxatlar[] = [
+                'days' => $chunkDays,
+                'products' => $productsForChunk,
+            ];
+        }
+
+        // Dompdf orqali PDF yaratish
+        $dompdf = new Dompdf('UTF-8');
+        $html = mb_convert_encoding(
+            view('pdffile.accountant.yukxat', compact('yukxatlar', 'kindgar', 'region')),
+            'HTML-ENTITIES',
+            'UTF-8'
+        );
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+        $dompdf->stream('yukxat_' . $start . '_' . $end . '.pdf', ['Attachment' => 0]);
+    }
+
     public function nakapitworker(Request $request, $id, $ageid, $start, $end, $costid)
     {
         $kindgar = Kindgarden::where('id', $id)->first();
@@ -738,8 +852,8 @@ class AccountantController extends Controller
                     ->where('number_childrens.kingar_name_id', $id)
                     ->where('number_childrens.king_age_name_id', $food->worker_age_id)
                     ->leftjoin('active_menus', function ($join) {
-                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                })
+                        $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    })
                     ->where('active_menus.day_id', $day->id)
                     ->where('active_menus.age_range_id', $food->worker_age_id)
                     ->where('active_menus.menu_food_id', $food->food_id)
@@ -829,9 +943,9 @@ class AccountantController extends Controller
                 ->where('kingar_name_id', $id)
                 ->where('king_age_name_id', $ageid)
                 ->leftjoin('active_menus', function ($join) {
-                $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-            })
+                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                })
                 ->where('active_menus.day_id', $day->id)
                 ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                 ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
@@ -958,8 +1072,7 @@ class AccountantController extends Controller
         // Hisob-faktura raqami va sanasi
         if (is_null(env('INVOICE_NUMBER'))) {
             $invoice_number = $days->last()->month_id . '-' . $kindgar->number_of_org;
-        }
-        else {
+        } else {
             $invoice_number = $days->last()->month_id . '/' . env('INVOICE_NUMBER');
         }
         $invoice_date = $days->last()->created_at->format('d.m.Y');
@@ -1039,8 +1152,7 @@ class AccountantController extends Controller
         // Dalolatnoma raqami va sanasi
         if (is_null(env('INVOICE_NUMBER'))) {
             $invoice_number = $kindgar->number_of_org . '-' . $days->last()->month_id;
-        }
-        else {
+        } else {
             $invoice_number = $days->last()->month_id . '/' . env('INVOICE_NUMBER');
         }
         $invoice_date = $days->last()->created_at->format('d.m.Y');
@@ -1084,8 +1196,8 @@ class AccountantController extends Controller
                     ->where('number_childrens.kingar_name_id', $id)
                     ->where('number_childrens.king_age_name_id', $food->worker_age_id)
                     ->leftjoin('active_menus', function ($join) {
-                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                })
+                        $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    })
                     ->where('active_menus.day_id', $day->id)
                     ->where('active_menus.age_range_id', $food->worker_age_id)
                     ->where('active_menus.menu_food_id', $food->food_id)
@@ -1178,9 +1290,9 @@ class AccountantController extends Controller
                     ->where('kingar_name_id', $id)
                     ->where('king_age_name_id', $age->id)
                     ->leftjoin('active_menus', function ($join) {
-                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-                })
+                        $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                        $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                    })
                     ->where('active_menus.day_id', $day->id)
                     ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                     ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
@@ -1276,9 +1388,9 @@ class AccountantController extends Controller
                 ->where('kingar_name_id', $id)
                 ->where('king_age_name_id', $ageid)
                 ->leftjoin('active_menus', function ($join) {
-                $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-            })
+                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                })
                 ->where('active_menus.day_id', $day->id)
                 ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                 ->join('norm_categories', 'products.norm_cat_id', '=', 'norm_categories.id')
@@ -1291,7 +1403,7 @@ class AccountantController extends Controller
             foreach ($join as $row) {
                 if (!isset($productscount[$row->norm_cat_id][$ageid])) {
                     $productscount[$row->norm_cat_id][$ageid] = 0;
-                // $productscount[$row->norm_cat_id][$ageid.'-children'] = 0;
+                    // $productscount[$row->norm_cat_id][$ageid.'-children'] = 0;
                 }
                 $productscount[$row->norm_cat_id][$ageid] += $row->weight;
                 $productscount[$row->norm_cat_id][$ageid . '-children'] = $row->kingar_children_number;
@@ -1366,9 +1478,9 @@ class AccountantController extends Controller
                         ->where('kingar_name_id', $row_id)
                         ->where('king_age_name_id', $age->id)
                         ->leftjoin('active_menus', function ($join) {
-                        $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                        $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-                    })
+                            $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                            $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                        })
                         ->where('active_menus.day_id', $day->id)
                         ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                         ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
@@ -1421,14 +1533,14 @@ class AccountantController extends Controller
         $pdf->setPaper('A3', 'landscape');
         return $pdf->stream('svod.pdf', ['Attachment' => 0]);
 
-    // $dompdf = new Dompdf('UTF-8');
-    // $html = mb_convert_encoding(view('pdffile.accountant.svod', compact('days', 'age', 'regions', 'nakproducts', 'kindgardens', 'over', 'nds')), 'HTML-ENTITIES', 'UTF-8');
-    // $dompdf->loadHtml($html);
+        // $dompdf = new Dompdf('UTF-8');
+        // $html = mb_convert_encoding(view('pdffile.accountant.svod', compact('days', 'age', 'regions', 'nakproducts', 'kindgardens', 'over', 'nds')), 'HTML-ENTITIES', 'UTF-8');
+        // $dompdf->loadHtml($html);
 
-    // $dompdf->setPaper('A3',  'landscape');
-    // $name = "svod.pdf";
-    // $dompdf->render();
-    // $dompdf->stream($name, ['Attachment' => 0]); 
+        // $dompdf->setPaper('A3',  'landscape');
+        // $name = "svod.pdf";
+        // $dompdf->render();
+        // $dompdf->stream($name, ['Attachment' => 0]); 
     }
 
     public function svodworkers(Request $request)
@@ -1448,8 +1560,8 @@ class AccountantController extends Controller
                         ->where('number_childrens.kingar_name_id', $row_id)
                         ->where('number_childrens.king_age_name_id', $food->worker_age_id)
                         ->leftjoin('active_menus', function ($join) {
-                        $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                    })
+                            $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                        })
                         ->where('active_menus.day_id', $day->id)
                         ->where('active_menus.age_range_id', $food->worker_age_id)
                         ->where('active_menus.menu_food_id', $food->food_id)
@@ -1580,10 +1692,10 @@ class AccountantController extends Controller
                         ->where('number_childrens.king_age_name_id', $age->id)
                         ->join('kindgardens', 'kindgardens.id', '=', 'number_childrens.kingar_name_id')
                         ->leftjoin('active_menus', function ($join) {
-                        $join->on('number_childrens.day_id', '=', 'active_menus.day_id');
-                        $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                        $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-                    })
+                            $join->on('number_childrens.day_id', '=', 'active_menus.day_id');
+                            $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                            $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                        })
                         ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                         ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
                         ->get();
@@ -1689,23 +1801,23 @@ class AccountantController extends Controller
                 ->where('kingarden_name_id', $kid)
                 ->join('products', 'minus_multi_storages.product_name_id', '=', 'products.id')
                 ->get([
-                'minus_multi_storages.id',
-                'minus_multi_storages.product_name_id',
-                'minus_multi_storages.day_id',
-                'minus_multi_storages.kingarden_name_id',
-                'minus_multi_storages.product_weight',
-                'products.product_name',
-                'products.size_name_id',
-                'products.div',
-                'products.sort'
-            ]);
+                    'minus_multi_storages.id',
+                    'minus_multi_storages.product_name_id',
+                    'minus_multi_storages.day_id',
+                    'minus_multi_storages.kingarden_name_id',
+                    'minus_multi_storages.product_weight',
+                    'products.product_name',
+                    'products.size_name_id',
+                    'products.div',
+                    'products.sort'
+                ]);
             // echo $minus->count()." ";
             foreach ($minus as $row) {
                 if (!isset($minusproducts[$row->product_name_id])) {
                     $minusproducts[$row->product_name_id] = 0;
                 }
                 $minusproducts[$row->product_name_id] += $row->product_weight;
-            // $minusproducts[$row->product_name_id]['productname'] = $row->product_name;
+                // $minusproducts[$row->product_name_id]['productname'] = $row->product_name;
             }
         }
         // dd($minusproducts);
@@ -1715,16 +1827,16 @@ class AccountantController extends Controller
                 ->where('kingarden_name_d', $kid)
                 ->join('products', 'plus_multi_storages.product_name_id', '=', 'products.id')
                 ->get([
-                'plus_multi_storages.id',
-                'plus_multi_storages.product_name_id',
-                'plus_multi_storages.day_id',
-                'plus_multi_storages.kingarden_name_d',
-                'plus_multi_storages.product_weight',
-                'products.product_name',
-                'products.size_name_id',
-                'products.div',
-                'products.sort'
-            ]);
+                    'plus_multi_storages.id',
+                    'plus_multi_storages.product_name_id',
+                    'plus_multi_storages.day_id',
+                    'plus_multi_storages.kingarden_name_d',
+                    'plus_multi_storages.product_weight',
+                    'products.product_name',
+                    'products.size_name_id',
+                    'products.div',
+                    'products.sort'
+                ]);
             foreach ($plus as $row) {
                 if (!isset($plusproducts[$row->product_name_id])) {
                     $plusproducts[$row->product_name_id] = 0;
@@ -1754,16 +1866,14 @@ class AccountantController extends Controller
                             <td>";
                 if (isset($plusproducts[$product->id])) {
                     $countin = $plusproducts[$product->id];
-                }
-                else
+                } else
                     $countin = 0;
                 $html = $html . $countin . "
                             </td>
                             <td>";
                 if (isset($minusproducts[$product->id])) {
                     $countout = $minusproducts[$product->id];
-                }
-                else
+                } else
                     $countout = 0;
                 $html = $html . $countout . "
                             </td>
@@ -1791,16 +1901,16 @@ class AccountantController extends Controller
                     ->where('kingarden_name_d', $kind->id)
                     ->join('products', 'plus_multi_storages.product_name_id', '=', 'products.id')
                     ->get([
-                    'plus_multi_storages.id',
-                    'plus_multi_storages.product_name_id',
-                    'plus_multi_storages.day_id',
-                    'plus_multi_storages.kingarden_name_d',
-                    'plus_multi_storages.product_weight',
-                    'products.product_name',
-                    'products.size_name_id',
-                    'products.div',
-                    'products.sort'
-                ]);
+                        'plus_multi_storages.id',
+                        'plus_multi_storages.product_name_id',
+                        'plus_multi_storages.day_id',
+                        'plus_multi_storages.kingarden_name_d',
+                        'plus_multi_storages.product_weight',
+                        'products.product_name',
+                        'products.size_name_id',
+                        'products.div',
+                        'products.sort'
+                    ]);
                 foreach ($plus as $row) {
                     if (!isset($plusproducts[$row->product_name_id])) {
                         $plusproducts[$row->product_name_id] = 0;
@@ -1812,16 +1922,16 @@ class AccountantController extends Controller
                     ->where('kingarden_name_id', $kind->id)
                     ->join('products', 'minus_multi_storages.product_name_id', '=', 'products.id')
                     ->get([
-                    'minus_multi_storages.id',
-                    'minus_multi_storages.product_name_id',
-                    'minus_multi_storages.day_id',
-                    'minus_multi_storages.kingarden_name_id',
-                    'minus_multi_storages.product_weight',
-                    'products.product_name',
-                    'products.size_name_id',
-                    'products.div',
-                    'products.sort'
-                ]);
+                        'minus_multi_storages.id',
+                        'minus_multi_storages.product_name_id',
+                        'minus_multi_storages.day_id',
+                        'minus_multi_storages.kingarden_name_id',
+                        'minus_multi_storages.product_weight',
+                        'products.product_name',
+                        'products.size_name_id',
+                        'products.div',
+                        'products.sort'
+                    ]);
                 foreach ($minus as $row) {
                     if (!isset($minusproducts[$row->product_name_id])) {
                         $minusproducts[$row->product_name_id] = 0;
@@ -1834,8 +1944,7 @@ class AccountantController extends Controller
         foreach ($minusproducts as $key => $value) {
             if (!isset($plusproducts[$key])) {
                 $mods[$key] = 0;
-            }
-            else {
+            } else {
                 $mods[$key] = $plusproducts[$key] - $value;
             }
         }
@@ -2160,7 +2269,7 @@ class AccountantController extends Controller
         $pdf->setOptions(['dpi' => 150]);
         return $pdf->stream('transportation.pdf');
 
-    // return view('pdffile.accountant.transportation', compact('days', 'costs', 'number_childrens', 'kindgar'));
+        // return view('pdffile.accountant.transportation', compact('days', 'costs', 'number_childrens', 'kindgar'));
     }
 
     public function transportationSecondary(Request $request, $id, $start, $end)
@@ -2192,7 +2301,7 @@ class AccountantController extends Controller
         $pdf->setOptions(['dpi' => 150]);
         return $pdf->stream('transportationSecondary.pdf');
 
-    // return view('pdffile.accountant.transportationSecondary', compact('days', 'costs', 'number_childrens', 'kindgar', 'ages'));
+        // return view('pdffile.accountant.transportationSecondary', compact('days', 'costs', 'number_childrens', 'kindgar', 'ages'));
 
     }
 
@@ -2265,7 +2374,7 @@ class AccountantController extends Controller
         $pdf->setOptions(['dpi' => 150]);
         return $pdf->stream('transportation.pdf');
 
-    // return view('pdffile.accountant.transportation', compact('days', 'costs', 'number_childrens', 'kindgar'));
+        // return view('pdffile.accountant.transportation', compact('days', 'costs', 'number_childrens', 'kindgar'));
     }
 
     public function reportregion(Request $request, $id, $start, $end)
@@ -2358,8 +2467,7 @@ class AccountantController extends Controller
         // Hisob-faktura raqami va sanasi
         if (is_null(env('INVOICE_NUMBER'))) {
             $invoice_number = $days->last()->month_id . '-' . $id;
-        }
-        else {
+        } else {
             $invoice_number = env('INVOICE_NUMBER');
         }
         $invoice_date = $days->last()->created_at->format('d.m.Y');
@@ -2441,8 +2549,7 @@ class AccountantController extends Controller
         // Dalolatnoma raqami va sanasi
         if (is_null(env('INVOICE_NUMBER'))) {
             $invoice_number = $id . '-' . $days->last()->month_id;
-        }
-        else {
+        } else {
             $invoice_number = env('INVOICE_NUMBER');
         }
         $invoice_date = $days->last()->created_at->format('d.m.Y');
@@ -2540,8 +2647,8 @@ class AccountantController extends Controller
         $kindgardens = Kindgarden::where('region_id', $id)
             ->where('hide', 1)
             ->whereHas('age_range', function ($query) use ($ageid) {
-            $query->where('age_range_id', $ageid);
-        })
+                $query->where('age_range_id', $ageid);
+            })
             ->get();
         $nakproducts = [];
         foreach ($days as $day) {
@@ -2606,7 +2713,7 @@ class AccountantController extends Controller
 
         return $pdf->stream('reportProductsOfRegion.pdf');
 
-    // return view('pdffile.accountant.reportProductsOfRegion', compact('region', 'days', 'protsent', 'age', 'products', 'kindgardens', 'nakproducts'));
+        // return view('pdffile.accountant.reportProductsOfRegion', compact('region', 'days', 'protsent', 'age', 'products', 'kindgardens', 'nakproducts'));
     }
 
     public function reportProductsOfRegionexcel(Request $request, $id, $start, $end, $ageid)
@@ -2700,8 +2807,7 @@ class AccountantController extends Controller
         // Hisob-faktura raqami va sanasi
         if (is_null(env('INVOICE_NUMBER'))) {
             $invoice_number = $kindgar->number_of_org . '/' . $month_number;
-        }
-        else {
+        } else {
             $invoice_number = $month_number . '/' . env('INVOICE_NUMBER');
         }
         $invoice_date = $days->last()->created_at->format('d.m.Y');
@@ -2761,13 +2867,13 @@ class AccountantController extends Controller
 
         return Excel::download(
             new SvodExport(
-            $request->start,
-            $request->end,
-            $request->kindgardens,
-            $request->region_id,
-            $request->cost_id,
-            $request->over,
-            $request->nds
+                $request->start,
+                $request->end,
+                $request->kindgardens,
+                $request->region_id,
+                $request->cost_id,
+                $request->over,
+                $request->nds
             ),
             'svod_hisoboti_' . date('Y-m-d') . '.xlsx'
         );
@@ -2806,7 +2912,7 @@ class AccountantController extends Controller
 
             // Report davri boshlanish va tugash sanalari
             $report_start = $days->first()->created_at->format('Y-m-d');
-            $report_end   = $days->last()->created_at->format('Y-m-d');
+            $report_end = $days->last()->created_at->format('Y-m-d');
 
             // Amaldagi shartnomani bazadan olish
             $activeContract = KindgardenContract::where('kindgarden_id', $kindgar->id)
@@ -2838,25 +2944,24 @@ class AccountantController extends Controller
                 ->first();
 
             $buyurtmachi = [
-                'company_name'     => $region->region_name . ' ММТБга тасарруфидаги ' . $kindgar->number_of_org . '-сонли ДМТТ',
-                'address'          => $activeRequisite
+                'company_name' => $region->region_name . ' ММТБга тасарруфидаги ' . $kindgar->number_of_org . '-сонли ДМТТ',
+                'address' => $activeRequisite
                     ? $region->region_name . ', ' . $activeRequisite->address
                     : $region->region_name,
-                'inn'              => $activeRequisite->inn ?? '________________',
-                'bank_account'     => $activeRequisite->bank_account ?? '___________________________________',
-                'mfo'              => $activeRequisite->mfo ?? '00014',
+                'inn' => $activeRequisite->inn ?? '________________',
+                'bank_account' => $activeRequisite->bank_account ?? '___________________________________',
+                'mfo' => $activeRequisite->mfo ?? '00014',
                 'treasury_account' => $activeRequisite->treasury_account ?? '_______________',
-                'bank'             => $activeRequisite->bank ?? 'Марказий банк ХККМ',
-                'director_name'    => $activeRequisite->director_name ?? '',
-                'director_phone'   => $activeRequisite->director_phone ?? '__________________________',
-                'phone'            => $activeRequisite->director_phone ?? '__________________________',
+                'bank' => $activeRequisite->bank ?? 'Марказий банк ХККМ',
+                'director_name' => $activeRequisite->director_name ?? '',
+                'director_phone' => $activeRequisite->director_phone ?? '__________________________',
+                'phone' => $activeRequisite->director_phone ?? '__________________________',
             ];
 
             if (is_null(env('INVOICE_NUMBER'))) {
                 $invoice_number = $days->last()->month_id % 12 == 0 ? 12 : $days->last()->month_id % 12;
                 $invoice_number = $invoice_number - 6;
-            }
-            else {
+            } else {
                 $invoice_number = env('INVOICE_NUMBER');
             }
             $invoice_number = $kindgar->number_of_org . ' / ' . $invoice_number;
@@ -2923,8 +3028,7 @@ class AccountantController extends Controller
 
             return $response;
 
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             // Xatolik yuz berganda vaqtinchalik fayllarni tozalash
             foreach ($pdfFiles as $file) {
                 if (file_exists($file)) {
@@ -2949,7 +3053,8 @@ class AccountantController extends Controller
             $fpdi->SetAutoPageBreak(false);
 
             foreach ($pdfFiles as $file) {
-                if (!file_exists($file)) continue;
+                if (!file_exists($file))
+                    continue;
 
                 $pageCount = $fpdi->setSourceFile($file);
                 for ($i = 1; $i <= $pageCount; $i++) {
@@ -2983,9 +3088,9 @@ class AccountantController extends Controller
                 ->where('kingar_name_id', $id)
                 ->where('king_age_name_id', $ageid)
                 ->leftjoin('active_menus', function ($join) {
-                $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-            })
+                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                })
                 ->where('active_menus.day_id', $day->id)
                 ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                 ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
@@ -3059,9 +3164,9 @@ class AccountantController extends Controller
                 ->where('kingar_name_id', $id)
                 ->where('king_age_name_id', $ageid)
                 ->leftjoin('active_menus', function ($join) {
-                $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
-                $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
-            })
+                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                })
                 ->where('active_menus.day_id', $day->id)
                 ->join('products', 'active_menus.product_name_id', '=', 'products.id')
                 ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
@@ -3312,13 +3417,11 @@ class AccountantController extends Controller
                         $menu = $this->getCachedMenu($day->id, $age->id);
                         if ($menu && $menu->count() > 0) {
                             $child->menu_name = $menu->first()->menu_name ?? '';
-                        }
-                        else {
+                        } else {
                             $child->menu_name = '';
                         }
                         $number_childrens[$day->id][$age->id] = $child;
-                    }
-                    else {
+                    } else {
                         $number_childrens[$day->id][$age->id] = null;
                     }
                 }
@@ -3527,11 +3630,11 @@ class AccountantController extends Controller
     public function storeShartnoma(Request $request)
     {
         KindgardenContract::create([
-            'kindgarden_id'   => $request->kindgarden_id,
+            'kindgarden_id' => $request->kindgarden_id,
             'contract_number' => $request->contract_number,
-            'contract_date'   => $request->contract_date,
-            'start_date'      => $request->start_date,
-            'end_date'        => $request->end_date ?: null,
+            'contract_date' => $request->contract_date,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date ?: null,
         ]);
         return back()->with('success', 'Shartnoma qo\'shildi');
     }
@@ -3540,11 +3643,11 @@ class AccountantController extends Controller
     {
         $shartnoma = KindgardenContract::findOrFail($request->id);
         $shartnoma->update([
-            'kindgarden_id'   => $request->kindgarden_id,
+            'kindgarden_id' => $request->kindgarden_id,
             'contract_number' => $request->contract_number,
-            'contract_date'   => $request->contract_date,
-            'start_date'      => $request->start_date,
-            'end_date'        => $request->end_date ?: null,
+            'contract_date' => $request->contract_date,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date ?: null,
         ]);
         return back()->with('success', 'Shartnoma yangilandi');
     }
@@ -3567,18 +3670,18 @@ class AccountantController extends Controller
     public function storeRekvizit(Request $request)
     {
         KindgardenRequisite::create([
-            'kindgarden_id'    => $request->kindgarden_id,
-            'director_name'    => $request->director_name,
-            'director_phone'   => $request->director_phone,
-            'reception_phone'  => $request->reception_phone,
-            'address'          => $request->address,
-            'inn'              => $request->inn,
-            'bank_account'     => $request->bank_account,
-            'mfo'              => $request->mfo,
+            'kindgarden_id' => $request->kindgarden_id,
+            'director_name' => $request->director_name,
+            'director_phone' => $request->director_phone,
+            'reception_phone' => $request->reception_phone,
+            'address' => $request->address,
+            'inn' => $request->inn,
+            'bank_account' => $request->bank_account,
+            'mfo' => $request->mfo,
             'treasury_account' => $request->treasury_account,
-            'bank'             => $request->bank,
-            'start_date'       => $request->start_date,
-            'end_date'         => $request->end_date ?: null,
+            'bank' => $request->bank,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date ?: null,
         ]);
         return back()->with('success', 'Rekvizit qo\'shildi');
     }
@@ -3587,18 +3690,18 @@ class AccountantController extends Controller
     {
         $rekvizit = KindgardenRequisite::findOrFail($request->id);
         $rekvizit->update([
-            'kindgarden_id'    => $request->kindgarden_id,
-            'director_name'    => $request->director_name,
-            'director_phone'   => $request->director_phone,
-            'reception_phone'  => $request->reception_phone,
-            'address'          => $request->address,
-            'inn'              => $request->inn,
-            'bank_account'     => $request->bank_account,
-            'mfo'              => $request->mfo,
+            'kindgarden_id' => $request->kindgarden_id,
+            'director_name' => $request->director_name,
+            'director_phone' => $request->director_phone,
+            'reception_phone' => $request->reception_phone,
+            'address' => $request->address,
+            'inn' => $request->inn,
+            'bank_account' => $request->bank_account,
+            'mfo' => $request->mfo,
             'treasury_account' => $request->treasury_account,
-            'bank'             => $request->bank,
-            'start_date'       => $request->start_date,
-            'end_date'         => $request->end_date ?: null,
+            'bank' => $request->bank,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date ?: null,
         ]);
         return back()->with('success', 'Rekvizit yangilandi');
     }
