@@ -395,14 +395,6 @@
 							<div class="column">
 								<p style="text-align: center;"><strong> Бухгалтер:</strong> __________________;</p>
 							</div>
-						@else
-							<div class="column">
-								@php
-									$qrImage = base64_encode(file_get_contents(public_path('images/qrmanzil.jpg')));
-								@endphp
-								<img src="data:image/jpeg;base64,{{ $qrImage }}" 
-									style="width:120; position:absolute; left:10px;">
-							</div>
 						@endif
 							<div class="column">
 								<p style="text-align: center;"><strong>{{ explode(',', env('MENU_SIGNATURE'))[0] }}:</strong> __________________;</p>
