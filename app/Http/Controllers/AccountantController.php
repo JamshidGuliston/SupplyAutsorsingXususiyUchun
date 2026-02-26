@@ -740,10 +740,44 @@ class AccountantController extends Controller
         $kindgar = Kindgarden::where('id', $id)->first();
         $region = Region::where('id', $kindgar->region_id)->first();
 
-        // Barcha kunlarni olish
-        $days = Day::where('id', '>=', $start)
-            ->where('id', '<=', $end)
-            ->orderBy('id', 'asc')
+        // ID tartibsiz bo'lishi mumkin — haqiqiy sana bo'yicha filtrlash
+        $dayA = Day::findOrFail($start);
+        $dayB = Day::findOrFail($end);
+
+        $isABeforeB = ($dayA->year_id < $dayB->year_id)
+            || ($dayA->year_id == $dayB->year_id && $dayA->month_id < $dayB->month_id)
+            || ($dayA->year_id == $dayB->year_id && $dayA->month_id == $dayB->month_id && $dayA->day_number <= $dayB->day_number);
+
+        $startDay = $isABeforeB ? $dayA : $dayB;
+        $endDay   = $isABeforeB ? $dayB : $dayA;
+
+        $days = Day::where(function ($q) use ($startDay) {
+                $q->where('year_id', '>', $startDay->year_id)
+                  ->orWhere(function ($q2) use ($startDay) {
+                      $q2->where('year_id', $startDay->year_id)
+                         ->where('month_id', '>', $startDay->month_id);
+                  })
+                  ->orWhere(function ($q2) use ($startDay) {
+                      $q2->where('year_id', $startDay->year_id)
+                         ->where('month_id', $startDay->month_id)
+                         ->where('day_number', '>=', $startDay->day_number);
+                  });
+            })
+            ->where(function ($q) use ($endDay) {
+                $q->where('year_id', '<', $endDay->year_id)
+                  ->orWhere(function ($q2) use ($endDay) {
+                      $q2->where('year_id', $endDay->year_id)
+                         ->where('month_id', '<', $endDay->month_id);
+                  })
+                  ->orWhere(function ($q2) use ($endDay) {
+                      $q2->where('year_id', $endDay->year_id)
+                         ->where('month_id', $endDay->month_id)
+                         ->where('day_number', '<=', $endDay->day_number);
+                  });
+            })
+            ->orderBy('year_id', 'asc')
+            ->orderBy('month_id', 'asc')
+            ->orderBy('day_number', 'asc')
             ->get();
 
         if ($days->isEmpty()) {
