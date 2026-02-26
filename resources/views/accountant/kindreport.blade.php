@@ -337,6 +337,12 @@
                     </label>
                 </div>
                 <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="doc_nakapitwithcost" value="nakapitwithcost" checked>
+                    <label class="form-check-label fw-semibold" for="doc_nakapitwithcost">
+                        <i class="fas fa-coins text-warning me-1"></i> САРФЛАНГАН ОЗИҚ-ОВҚАТ МАҲСУЛОТЛАР NARX BILAN
+                    </label>
+                </div>
+                <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="doc_menu" value="menu" checked>
                     <label class="form-check-label fw-semibold" for="doc_menu">
                         <i class="fas fa-utensils text-danger me-1"></i> МЕНЮЛАР
@@ -615,7 +621,7 @@
 
     function generateCombinedPdf() {
         var selectedDocs = [];
-        ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'menu'].forEach(function(doc) {
+        ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'nakapitwithcost', 'menu'].forEach(function(doc) {
             if (document.getElementById('doc_' + doc).checked) {
                 selectedDocs.push(doc);
             }
@@ -642,7 +648,7 @@
     }
 
     function toggleAllDocs(state) {
-        ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'menu'].forEach(function(doc) {
+        ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'nakapitwithcost', 'menu'].forEach(function(doc) {
             document.getElementById('doc_' + doc).checked = state;
         });
         // Yuk xati ni ham toggle qilish

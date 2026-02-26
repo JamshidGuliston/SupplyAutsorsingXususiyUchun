@@ -3100,7 +3100,7 @@ class AccountantController extends Controller
                 : ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'menu'];
 
             // Optimizatsiya: Barcha PDF'larni parallel yaratish
-            $pdfFiles = $this->createPdfsInParallel($kindgar, $region, $days, $start, $end, $id, $tempDir, $timestamp, $contract_data, $buyurtmachi, $invoice_number, $invoice_date, $costs_common, $ages, $selectedDocs);
+            $pdfFiles = $this->createPdfsInParallel($kindgar, $region, $days, $start, $end, $id, $tempDir, $timestamp, $contract_data, $buyurtmachi, $invoice_number, $invoice_date, $costs_common, $ages, $selectedDocs, $costid);
             // PDF'larni birlashtirish uchun Ghostscript ishlatish
             $outputFile = $tempDir . '/combined_' . $kindgar->number_of_org . '_' . $timestamp . '.pdf';
 
@@ -3456,7 +3456,7 @@ class AccountantController extends Controller
      * PDF yaratish jarayonini optimizatsiya qilish
      * Barcha PDF'larni parallel yaratish
      */
-    private function createPdfsInParallel($kindgar, $region, $days, $start, $end, $id, $tempDir, $timestamp, $contract_data, $buyurtmachi, $invoice_number, $invoice_date, $costs_common, $ages, $selectedDocs = null)
+    private function createPdfsInParallel($kindgar, $region, $days, $start, $end, $id, $tempDir, $timestamp, $contract_data, $buyurtmachi, $invoice_number, $invoice_date, $costs_common, $ages, $selectedDocs = null, $costid = null)
     {
         if ($selectedDocs === null) {
             $selectedDocs = ['schotfaktur', 'dalolatnoma', 'transportation', 'nakapit', 'menu'];
@@ -3590,6 +3590,47 @@ class AccountantController extends Controller
                 $file_without = $tempDir . '/1_nakapit_without_' . $age->id . '_' . $timestamp . '.pdf';
                 file_put_contents($file_without, $pdf_without->output());
                 $pdfFiles[] = $file_without;
+            }
+        }
+
+        // 4.5 Nakapit WITH cost PDF'larni yaratish
+        if (in_array('nakapitwithcost', $selectedDocs) && $costid) {
+            // costsdays va costs bir marta olinadi (barcha age_range uchun bir xil)
+            $costsdays_with = bycosts::where('day_id', $costid)
+                ->where('region_name_id', $kindgar->region_id)
+                ->join('days', 'bycosts.day_id', '=', 'days.id')
+                ->join('years', 'days.year_id', '=', 'years.id')
+                ->orderBy('bycosts.day_id', 'DESC')
+                ->get(['bycosts.day_id', 'days.day_number', 'days.month_id', 'years.year_name']);
+
+            $costs_with = [];
+            $bool_with = [];
+            foreach ($costsdays_with as $row) {
+                if (!isset($bool_with[$row->day_id])) {
+                    $costs_with[] = $row;
+                    $bool_with[$row->day_id] = 1;
+                }
+            }
+
+            foreach ($kindgar->age_range as $age) {
+                $nakproducts_with = $this->getNakapitData($id, $age->id, $start, $end, $costid);
+                $protsent_with = $this->getCachedProtsent($kindgar->region_id, $age->id, $days->last()->created_at->format('Y-m-d'));
+
+                $pdf_with = \PDF::loadView('pdffile.accountant.nakapit', [
+                    'age'        => $age,
+                    'days'       => $days,
+                    'nakproducts' => $nakproducts_with,
+                    'costsdays'  => $costsdays_with,
+                    'costs'      => $costs_with,
+                    'kindgar'    => $kindgar,
+                    'protsent'   => $protsent_with,
+                    'region'     => $region,
+                ]);
+                $this->setPdfOptionsForNakapitWithoutCost($pdf_with, 'A4', 'landscape');
+
+                $file_with = $tempDir . '/1_nakapit_with_' . $age->id . '_' . $timestamp . '.pdf';
+                file_put_contents($file_with, $pdf_with->output());
+                $pdfFiles[] = $file_with;
             }
         }
 
