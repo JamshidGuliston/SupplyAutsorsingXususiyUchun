@@ -3347,6 +3347,99 @@ class AccountantController extends Controller
     }
 
     /**
+     * Nakapit WITH cost uchun ma'lumotlarni olish
+     * getNakapitWithoutCostData kabi external (sana-filtered) kunlarni ishlatadi,
+     * + narxlarni ($row[0]) ham qo'shadi
+     */
+    private function getNakapitWithCostData($id, $ageid, $costid, $externalDays)
+    {
+        $nakproducts = [];
+        $days = $externalDays;
+
+        $allData = [];
+        foreach ($days as $day) {
+            $allData[$day->id] = Number_children::where('number_childrens.day_id', $day->id)
+                ->where('kingar_name_id', $id)
+                ->where('king_age_name_id', $ageid)
+                ->leftjoin('active_menus', function ($join) {
+                    $join->on('number_childrens.kingar_menu_id', '=', 'active_menus.title_menu_id');
+                    $join->on('number_childrens.king_age_name_id', '=', 'active_menus.age_range_id');
+                })
+                ->where('active_menus.day_id', $day->id)
+                ->join('products', 'active_menus.product_name_id', '=', 'products.id')
+                ->join('sizes', 'products.size_name_id', '=', 'sizes.id')
+                ->get();
+        }
+
+        foreach ($days as $day) {
+            $join = $allData[$day->id] ?? collect();
+
+            $productscount = [];
+            foreach ($join as $row) {
+                if (!isset($productscount[$row->product_name_id][$ageid])) {
+                    $productscount[$row->product_name_id][$ageid] = 0;
+                }
+                $productscount[$row->product_name_id][$ageid] += $row->weight;
+                $productscount[$row->product_name_id][$ageid . '-children'] = $row->kingar_children_number;
+                $productscount[$row->product_name_id][$ageid . 'div'] = $row->div;
+                $productscount[$row->product_name_id]['product_name'] = $row->product_name;
+                $productscount[$row->product_name_id][$ageid . 'sort'] = $row->sort;
+                $productscount[$row->product_name_id]['size_name'] = $row->size_name;
+            }
+
+            foreach ($productscount as $key => $row) {
+                if (isset($row['product_name'])) {
+                    $cachedChildren = $this->getCachedNumberChildren($day->id, $ageid);
+                    $childs = $cachedChildren ? $cachedChildren->sum('kingar_children_number') : 0;
+
+                    $nakproducts[0][$day->id] = $childs;
+                    $nakproducts[0]['product_name'] = "Болалар сони";
+                    $nakproducts[0]['size_name'] = "";
+                    $nakproducts[0][0] = 0;
+
+                    $nakproducts[$key][$day->id] = ($row[$ageid] * $row[$ageid . '-children']) / $row[$ageid . 'div'];
+                    $nakproducts[$key]['product_name'] = $row['product_name'];
+                    $nakproducts[$key]['sort'] = $row[$ageid . 'sort'];
+                    $nakproducts[$key]['size_name'] = $row['size_name'];
+                }
+            }
+        }
+
+        // Narxlarni qo'shish
+        $costs = bycosts::where('day_id', $costid)
+            ->where('region_name_id', Kindgarden::where('id', $id)->first()->region_id)
+            ->orderBy('day_id', 'DESC')
+            ->get();
+
+        foreach ($costs as $cost) {
+            if (isset($nakproducts[$cost->praduct_name_id]['product_name'])) {
+                $nakproducts[$cost->praduct_name_id][0] = $cost->price_cost;
+            }
+        }
+
+        usort($nakproducts, function ($a, $b) {
+            if (isset($a["sort"]) and isset($b["sort"])) {
+                return $a["sort"] > $b["sort"];
+            }
+        });
+
+        // Faqat ma'lumot bor kunlarni qoldirish
+        $activeDayIds = [];
+        foreach ($nakproducts as $key => $row) {
+            if (!isset($row['product_name']) || $row['product_name'] === "Болалар сони") continue;
+            foreach ($days as $day) {
+                if (isset($row[$day->id])) {
+                    $activeDayIds[] = $day->id;
+                }
+            }
+        }
+        $activeDayIds = array_unique($activeDayIds);
+        $filteredDays = $days->filter(fn($day) => in_array($day->id, $activeDayIds))->values();
+
+        return ['nakproducts' => $nakproducts, 'days' => $filteredDays];
+    }
+
+    /**
      * Barcha kerakli ma'lumotlarni oldindan yuklash
      * Bu N+1 query muammosini hal qiladi
      */
@@ -3613,12 +3706,14 @@ class AccountantController extends Controller
             }
 
             foreach ($kindgar->age_range as $age) {
-                $nakproducts_with = $this->getNakapitData($id, $age->id, $start, $end, $costid);
+                $nakapit_with_result = $this->getNakapitWithCostData($id, $age->id, $costid, $days);
+                $nakproducts_with = $nakapit_with_result['nakproducts'];
+                $days_with = $nakapit_with_result['days'];
                 $protsent_with = $this->getCachedProtsent($kindgar->region_id, $age->id, $days->last()->created_at->format('Y-m-d'));
 
                 $pdf_with = \PDF::loadView('pdffile.accountant.nakapit', [
                     'age'        => $age,
-                    'days'       => $days,
+                    'days'       => $days_with,
                     'nakproducts' => $nakproducts_with,
                     'costsdays'  => $costsdays_with,
                     'costs'      => $costs_with,
