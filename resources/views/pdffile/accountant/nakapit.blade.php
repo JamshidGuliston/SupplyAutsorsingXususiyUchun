@@ -13,7 +13,7 @@
 	 @page { margin: 0.2in 0.2in 0.2in 0.2in; }
 	body{
 		font-family: DejaVu Sans;
-		font-size:6px;
+		font-size:9px;
 		/* background-image: url(images/bg.jpg); */
 		background-position: top left;
 		background-repeat: no-repeat;
@@ -99,7 +99,7 @@
                     <thead>
                         <tr>
                             <th scope="col" style="width: 10%;" rowspan="2">Махсулотлар</th>
-                            <th style="width: 10px;">Сана</th>
+                            <th style="width: 20px; font-size: 7px">Сана</th>
                             <!-- <th style="width: 30px; font-size: 7px"><bold>Нарх</bold></th> -->
                             @foreach($days as $day)
 								<th scope="col">{{ $day->day_number }}</th>
