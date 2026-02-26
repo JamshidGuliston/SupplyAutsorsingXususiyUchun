@@ -78,7 +78,9 @@ class AccountantController extends Controller
     {
         $days = Day::join('months', 'months.id', '=', 'days.month_id')
             ->join('years', 'years.id', '=', 'days.year_id')
-            ->orderby('days.id', 'DESC')
+            ->orderBy('years.year_name', 'DESC')
+            ->orderBy('days.month_id', 'DESC')
+            ->orderBy('days.day_number', 'DESC')
             ->get(['days.id', 'days.day_number', 'months.month_name', 'years.year_name']);
         return $days;
     }
@@ -2892,9 +2894,39 @@ class AccountantController extends Controller
         $kindgar = Kindgarden::where('id', $id)->with('age_range')->first();
         $region = Region::where('id', $kindgar->region_id)->first();
 
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('years', 'days.year_id', '=', 'years.id')
+        // Sana oraliqni ID bo'yicha emas, haqiqiy sana (yil/oy/kun) bo'yicha filtrlash
+        $startDay = Day::findOrFail($start);
+        $endDay   = Day::findOrFail($end);
+
+        $days = Day::join('years', 'days.year_id', '=', 'years.id')
             ->join('months', 'days.month_id', '=', 'months.id')
+            ->where(function ($q) use ($startDay) {
+                $q->where('days.year_id', '>', $startDay->year_id)
+                  ->orWhere(function ($q2) use ($startDay) {
+                      $q2->where('days.year_id', $startDay->year_id)
+                         ->where('days.month_id', '>', $startDay->month_id);
+                  })
+                  ->orWhere(function ($q2) use ($startDay) {
+                      $q2->where('days.year_id', $startDay->year_id)
+                         ->where('days.month_id', $startDay->month_id)
+                         ->where('days.day_number', '>=', $startDay->day_number);
+                  });
+            })
+            ->where(function ($q) use ($endDay) {
+                $q->where('days.year_id', '<', $endDay->year_id)
+                  ->orWhere(function ($q2) use ($endDay) {
+                      $q2->where('days.year_id', $endDay->year_id)
+                         ->where('days.month_id', '<', $endDay->month_id);
+                  })
+                  ->orWhere(function ($q2) use ($endDay) {
+                      $q2->where('days.year_id', $endDay->year_id)
+                         ->where('days.month_id', $endDay->month_id)
+                         ->where('days.day_number', '<=', $endDay->day_number);
+                  });
+            })
+            ->orderBy('days.year_id', 'ASC')
+            ->orderBy('days.month_id', 'ASC')
+            ->orderBy('days.day_number', 'ASC')
             ->get(['days.id', 'days.day_number', 'months.id as month_id', 'months.month_name', 'years.year_name', 'days.created_at']);
 
         // Vaqtinchalik papka yaratish
