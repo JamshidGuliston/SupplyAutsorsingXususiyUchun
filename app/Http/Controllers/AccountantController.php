@@ -2894,11 +2894,41 @@ class AccountantController extends Controller
         $kindgar = Kindgarden::where('id', $id)->with('age_range')->first();
         $region = Region::where('id', $kindgar->region_id)->first();
 
+        // Sana oraliqni ID bo'yicha emas, haqiqiy sana (yil/oy/kun) bo'yicha filtrlash
+        $startDay = Day::findOrFail($start);
+        $endDay   = Day::findOrFail($end);
+
         $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
             ->join('years', 'days.year_id', '=', 'years.id')
             ->join('months', 'days.month_id', '=', 'months.id')
+            ->where(function ($q) use ($startDay) {
+                $q->where('days.year_id', '>', $startDay->year_id)
+                  ->orWhere(function ($q2) use ($startDay) {
+                      $q2->where('days.year_id', $startDay->year_id)
+                        ->where('days.month_id', '>', $startDay->month_id);
+                  })
+                  ->orWhere(function ($q2) use ($startDay) {
+                      $q2->where('days.year_id', $startDay->year_id)
+                         ->where('days.month_id', $startDay->month_id)
+                         ->where('days.day_number', '>=', $startDay->day_number);
+                  });
+            })
+            ->where(function ($q) use ($endDay) {
+                $q->where('days.year_id', '<', $endDay->year_id)
+                  ->orWhere(function ($q2) use ($endDay) {
+                      $q2->where('days.year_id', $endDay->year_id)
+                         ->where('days.month_id', '<', $endDay->month_id);
+                  })
+                  ->orWhere(function ($q2) use ($endDay) {
+                      $q2->where('days.year_id', $endDay->year_id)
+                         ->where('days.month_id', $endDay->month_id)
+                         ->where('days.day_number', '<=', $endDay->day_number);
+                  });
+            })
+            ->orderBy('days.year_id', 'ASC')
+            ->orderBy('days.month_id', 'ASC')
+            ->orderBy('days.day_number', 'ASC')
             ->get(['days.id', 'days.day_number', 'months.id as month_id', 'months.month_name', 'years.year_name', 'days.created_at']);
-
         // Vaqtinchalik papka yaratish
         $tempDir = storage_path('app/temp_pdfs');
         if (!file_exists($tempDir)) {
@@ -3151,10 +3181,10 @@ class AccountantController extends Controller
     /**
      * Nakapit without cost uchun ma'lumotlarni olish (helper method)
      */
-    private function getNakapitWithoutCostData($id, $ageid, $start, $end)
+    private function getNakapitWithoutCostData($id, $ageid, $start, $end, $externalDays = null)
     {
         $nakproducts = [];
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
+        $days = $externalDays ?? Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
             ->join('years', 'days.year_id', '=', 'years.id')
             ->get(['days.id', 'days.day_number', 'days.month_id', 'years.year_name']);
 
@@ -3446,7 +3476,7 @@ class AccountantController extends Controller
         // 4. Nakapit without cost PDF'larni yaratish
         if (in_array('nakapit', $selectedDocs)) {
             foreach ($kindgar->age_range as $age) {
-                $nakproducts_without = $this->getNakapitWithoutCostData($id, $age->id, $start, $end);
+                $nakproducts_without = $this->getNakapitWithoutCostData($id, $age->id, $start, $end, $days);
                 $protsent_without = $this->getCachedProtsent($kindgar->region_id, $age->id, $days->last()->created_at->format('Y-m-d'));
 
                 $pdf_without = \PDF::loadView('pdffile.accountant.nakapitwithoutcost', [
