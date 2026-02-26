@@ -2894,18 +2894,25 @@ class AccountantController extends Controller
         $kindgar = Kindgarden::where('id', $id)->with('age_range')->first();
         $region = Region::where('id', $kindgar->region_id)->first();
 
-        // Sana oraliqni ID bo'yicha emas, haqiqiy sana (yil/oy/kun) bo'yicha filtrlash
-        $startDay = Day::findOrFail($start);
-        $endDay   = Day::findOrFail($end);
+        // ID tartibsiz bo'lishi mumkin — haqiqiy sana (yil/oy/kun) bo'yicha filtrlash
+        $dayA = Day::findOrFail($start);
+        $dayB = Day::findOrFail($end);
 
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('years', 'days.year_id', '=', 'years.id')
+        // Qaysi kun xronologik jihatdan oldin ekanini aniqlash (avtomatik tartib)
+        $isABeforeB = ($dayA->year_id < $dayB->year_id)
+            || ($dayA->year_id == $dayB->year_id && $dayA->month_id < $dayB->month_id)
+            || ($dayA->year_id == $dayB->year_id && $dayA->month_id == $dayB->month_id && $dayA->day_number <= $dayB->day_number);
+
+        $startDay = $isABeforeB ? $dayA : $dayB;
+        $endDay   = $isABeforeB ? $dayB : $dayA;
+
+        $days = Day::join('years', 'days.year_id', '=', 'years.id')
             ->join('months', 'days.month_id', '=', 'months.id')
             ->where(function ($q) use ($startDay) {
                 $q->where('days.year_id', '>', $startDay->year_id)
                   ->orWhere(function ($q2) use ($startDay) {
                       $q2->where('days.year_id', $startDay->year_id)
-                        ->where('days.month_id', '>', $startDay->month_id);
+                         ->where('days.month_id', '>', $startDay->month_id);
                   })
                   ->orWhere(function ($q2) use ($startDay) {
                       $q2->where('days.year_id', $startDay->year_id)
@@ -3265,9 +3272,10 @@ class AccountantController extends Controller
             ->get()
             ->groupBy('age_range_id');
 
+        $dayIds = $days->pluck('id')->toArray();
+
         // Barcha kunlar uchun bolalar sonini bir vaqtda olish
-        $this->cachedNumberChildren = Number_children::where('day_id', '>=', $start)
-            ->where('day_id', '<=', $end)
+        $this->cachedNumberChildren = Number_children::whereIn('day_id', $dayIds)
             ->where('kingar_name_id', $id)
             ->whereIn('king_age_name_id', $ageIds)
             ->get()
@@ -3275,8 +3283,7 @@ class AccountantController extends Controller
 
         // Barcha kunlar uchun menyu ma'lumotlarini bir vaqtda olish
         $this->cachedMenus = Number_children::where('kingar_name_id', $id)
-            ->where('day_id', '>=', $start)
-            ->where('day_id', '<=', $end)
+            ->whereIn('day_id', $dayIds)
             ->whereIn('king_age_name_id', $ageIds)
             ->join('kindgardens', 'number_childrens.kingar_name_id', '=', 'kindgardens.id')
             ->join('titlemenus', 'number_childrens.kingar_menu_id', '=', 'titlemenus.id')
@@ -3285,8 +3292,7 @@ class AccountantController extends Controller
             ->groupBy(['day_id', 'king_age_name_id']);
 
         // Barcha kunlar uchun aktiv menyularni bir vaqtda olish
-        $this->cachedActiveMenus = Active_menu::where('day_id', '>=', $start)
-            ->where('day_id', '<=', $end)
+        $this->cachedActiveMenus = Active_menu::whereIn('day_id', $dayIds)
             ->whereIn('age_range_id', $ageIds)
             ->join('meal_times', 'active_menus.menu_meal_time_id', '=', 'meal_times.id')
             ->join('food', 'active_menus.menu_food_id', '=', 'food.id')
@@ -3302,8 +3308,7 @@ class AccountantController extends Controller
             ->get();
 
         // Barcha kunlar uchun ishchi ovqat ma'lumotlarini bir vaqtda olish
-        $this->cachedWorkerFood = titlemenu_food::where('day_id', '>=', $start - 1)
-            ->where('day_id', '<=', $end - 1)
+        $this->cachedWorkerFood = titlemenu_food::whereIn('day_id', $dayIds)
             ->whereIn('worker_age_id', $ageIds)
             ->get()
             ->groupBy(['day_id', 'worker_age_id', 'titlemenu_id']);
