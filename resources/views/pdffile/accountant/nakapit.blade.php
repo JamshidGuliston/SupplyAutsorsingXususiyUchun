@@ -117,6 +117,9 @@
 					@if(!isset($row['product_name'])) @continue @endif
 					<tr>
 						<td style="text-align: left; padding-left: 2px">{{ implode(' ', array_slice(explode(' ', $row['product_name']), 0, 3)) }}</td>
+						@if($row['product_name'] == "Болалар сони")
+							<td>{{ "" }}</td>
+						@endif
 						@if($row['product_name'] != "Болалар сони")
 							<td>{{ $row['size_name'] }}</td>
 						@endif
