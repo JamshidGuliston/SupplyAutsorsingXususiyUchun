@@ -85,6 +85,67 @@ class AccountantController extends Controller
         return $days;
     }
 
+    /**
+     * ID tartibsiz bo'lishi mumkin bo'lgan days jadvalidan haqiqiy sana oralig'ini olish.
+     * $start va $end ni avtomatik xronologik tartibga keltiradi.
+     */
+    private function getDaysByDateRange(int $start, int $end, array $select): \Illuminate\Support\Collection
+    {
+        $dayA = Day::findOrFail($start);
+        $dayB = Day::findOrFail($end);
+
+        $isABeforeB = ($dayA->year_id < $dayB->year_id)
+            || ($dayA->year_id == $dayB->year_id && $dayA->month_id < $dayB->month_id)
+            || ($dayA->year_id == $dayB->year_id && $dayA->month_id == $dayB->month_id && $dayA->day_number <= $dayB->day_number);
+
+        $startDay = $isABeforeB ? $dayA : $dayB;
+        $endDay   = $isABeforeB ? $dayB : $dayA;
+
+        return Day::join('years', 'days.year_id', '=', 'years.id')
+            ->join('months', 'days.month_id', '=', 'months.id')
+            ->where(function ($q) use ($startDay) {
+                $q->where('days.year_id', '>', $startDay->year_id)
+                  ->orWhere(function ($q2) use ($startDay) {
+                      $q2->where('days.year_id', $startDay->year_id)
+                         ->where('days.month_id', '>', $startDay->month_id);
+                  })
+                  ->orWhere(function ($q2) use ($startDay) {
+                      $q2->where('days.year_id', $startDay->year_id)
+                         ->where('days.month_id', $startDay->month_id)
+                         ->where('days.day_number', '>=', $startDay->day_number);
+                  });
+            })
+            ->where(function ($q) use ($endDay) {
+                $q->where('days.year_id', '<', $endDay->year_id)
+                  ->orWhere(function ($q2) use ($endDay) {
+                      $q2->where('days.year_id', $endDay->year_id)
+                         ->where('days.month_id', '<', $endDay->month_id);
+                  })
+                  ->orWhere(function ($q2) use ($endDay) {
+                      $q2->where('days.year_id', $endDay->year_id)
+                         ->where('days.month_id', $endDay->month_id)
+                         ->where('days.day_number', '<=', $endDay->day_number);
+                  });
+            })
+            ->orderBy('days.year_id', 'ASC')
+            ->orderBy('days.month_id', 'ASC')
+            ->orderBy('days.day_number', 'ASC')
+            ->get($select);
+    }
+
+    private function filterDaysWithChildren($days, $number_childrens): \Illuminate\Support\Collection
+    {
+        return $days->filter(function ($day) use ($number_childrens) {
+            if (!isset($number_childrens[$day->id])) return false;
+            foreach ($number_childrens[$day->id] as $key => $item) {
+                if ($key === 'menu') continue;
+                $count = is_object($item) ? ($item->kingar_children_number ?? 0) : (int)$item;
+                if ($count > 0) return true;
+            }
+            return false;
+        })->values();
+    }
+
     public function daysthisyear($id)
     {
         $days = Day::where('years.id', $id)
@@ -395,6 +456,19 @@ class AccountantController extends Controller
                 return $a["sort"] > $b["sort"];
             }
         });
+
+        // Filter out days that have no product data
+        $activeDayIds = [];
+        foreach ($nakproducts as $key => $row) {
+            if ($key === 0) continue; // Skip "Болалар сони" row
+            foreach ($days as $day) {
+                if (isset($row[$day->id])) {
+                    $activeDayIds[] = $day->id;
+                }
+            }
+        }
+        $activeDayIds = array_unique($activeDayIds);
+        $days = $days->filter(fn($day) => in_array($day->id, $activeDayIds))->values();
 
         $pdf = \PDF::loadView('pdffile.accountant.nakapitwithoutcost', compact('age', 'days', 'nakproducts', 'kindgar', 'protsent'));
         $pdf->setOption('page-size', 'A4');
@@ -1065,13 +1139,12 @@ class AccountantController extends Controller
 
         $region = Region::where('id', $kindgar->region_id)->first();
 
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('years', 'days.year_id', '=', 'years.id')
-            ->join('months', 'days.month_id', '=', 'months.id')
-            ->get(['days.day_number', 'months.id as month_id', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.id as month_id', 'years.year_name', 'days.created_at']);
 
         $costs = [];
-        // dd($days->last()->year_name.'-'.($days->last()->month_id % 12 == 0 ? 12 : $days->last()->month_id % 12).$days->last()->day_number); 
+        $total_number_children = [];
+        $dayIds = $days->pluck('id')->toArray();
+        // dd($days->last()->year_name.'-'.($days->last()->month_id % 12 == 0 ? 12 : $days->last()->month_id % 12).$days->last()->day_number);
         foreach ($kindgar->age_range as $age) {
             $costs[$age->id] = Protsent::where('region_id', $kindgar->region_id)
                 ->where('age_range_id', $age->id)
@@ -1080,7 +1153,7 @@ class AccountantController extends Controller
             if (!isset($total_number_children[$age->id])) {
                 $total_number_children[$age->id] = 0;
             }
-            $total_number_children[$age->id] += Number_children::where('day_id', '>=', $start)->where('day_id', '<=', $end)->where('kingar_name_id', $id)->where('king_age_name_id', $age->id)->sum('kingar_children_number');
+            $total_number_children[$age->id] += Number_children::whereIn('day_id', $dayIds)->where('kingar_name_id', $id)->where('king_age_name_id', $age->id)->sum('kingar_children_number');
         }
 
         // Autsorser ma'lumotlari (kompaniya ma'lumotlari)
@@ -1139,13 +1212,11 @@ class AccountantController extends Controller
 
         $region = Region::where('id', $kindgar->region_id)->first();
 
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('years', 'days.year_id', '=', 'years.id')
-            ->join('months', 'days.month_id', '=', 'months.id')
-            ->get(['days.day_number', 'months.id as month_id', 'months.month_name', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.id as month_id', 'months.month_name', 'years.year_name', 'days.created_at']);
 
         $costs = [];
         $total_number_children = [];
+        $dayIds = $days->pluck('id')->toArray();
 
         // Har bir yosh guruhi uchun protsent va bolalar sonini olish
         foreach ($kindgar->age_range as $age) {
@@ -1156,8 +1227,7 @@ class AccountantController extends Controller
             if (!isset($total_number_children[$age->id])) {
                 $total_number_children[$age->id] = 0;
             }
-            $total_number_children[$age->id] += Number_children::where('day_id', '>=', $start)
-                ->where('day_id', '<=', $end)
+            $total_number_children[$age->id] += Number_children::whereIn('day_id', $dayIds)
                 ->where('kingar_name_id', $id)
                 ->where('king_age_name_id', $age->id)
                 ->sum('kingar_children_number');
@@ -2279,10 +2349,7 @@ class AccountantController extends Controller
     public function transportation(Request $request, $id, $start, $end)
     {
         $kindgar = Kindgarden::where('id', $id)->first();
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('months', 'months.id', '=', 'days.month_id')
-            ->join('years', 'years.id', '=', 'days.year_id')
-            ->get(['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
         $ages = Age_range::where('parent_id', null)->get();
         $costs = Protsent::where('region_id', $kindgar->region_id)
             ->where('start_date', '<=', $days[0]->created_at->format('Y-m-d'))
@@ -2299,6 +2366,7 @@ class AccountantController extends Controller
                     ->first();
             }
         }
+        $days = $this->filterDaysWithChildren($days, $number_childrens);
         // make snappy pdf
         $pdf = \PDF::loadView('pdffile.accountant.transportation', compact('days', 'costs', 'number_childrens', 'kindgar', 'ages'));
         $pdf->setPaper('A4', 'landscape');
@@ -2311,10 +2379,7 @@ class AccountantController extends Controller
     public function transportationSecondary(Request $request, $id, $start, $end)
     {
         $kindgar = Kindgarden::where('id', $id)->first();
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('months', 'months.id', '=', 'days.month_id')
-            ->join('years', 'years.id', '=', 'days.year_id')
-            ->get(['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
         $ages = Age_range::all();
         $costs = Protsent::where('region_id', $kindgar->region_id)
             ->where('start_date', '<=', $days[0]->created_at->format('Y-m-d'))
@@ -2331,6 +2396,7 @@ class AccountantController extends Controller
                     ->first();
             }
         }
+        $days = $this->filterDaysWithChildren($days, $number_childrens);
 
         $pdf = \PDF::loadView('pdffile.accountant.transportationSecondary', compact('days', 'costs', 'number_childrens', 'kindgar', 'ages'));
         $pdf->setPaper('A3', 'landscape');
@@ -2345,10 +2411,7 @@ class AccountantController extends Controller
     public function transportationThird(Request $request, $id, $start, $end)
     {
         $kindgar = Kindgarden::where('id', $id)->first();
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('months', 'months.id', '=', 'days.month_id')
-            ->join('years', 'years.id', '=', 'days.year_id')
-            ->get(['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
         $ages = Age_range::all();
         $costs = Protsent::where('region_id', $kindgar->region_id)
             ->where('end_date', '>=', $days[count($days) - 1]->created_at->format('Y-m-d'))
@@ -2364,6 +2427,7 @@ class AccountantController extends Controller
                     ->first();
             }
         }
+        $days = $this->filterDaysWithChildren($days, $number_childrens);
 
         // return view('pdffile.accountant.transportationThird', compact('days', 'costs', 'number_childrens', 'kindgar', 'ages'));
 
@@ -2380,10 +2444,7 @@ class AccountantController extends Controller
         $kindgardens = Kindgarden::where('region_id', $id)->where('hide', 1)->get();
         // dd($kindgardens->pluck('id')->toArray());
         $region = Region::where('id', $id)->first();
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('months', 'months.id', '=', 'days.month_id')
-            ->join('years', 'years.id', '=', 'days.year_id')
-            ->get(['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
         $ages = Age_range::all();
         $costs = Protsent::where('region_id', $id)
             ->where('start_date', '<=', $days[0]->created_at->format('Y-m-d'))
@@ -2404,6 +2465,7 @@ class AccountantController extends Controller
                 ->leftJoin('titlemenus', 'titlemenus.id', '=', 'number_childrens.kingar_menu_id')
                 ->first();
         }
+        $days = $this->filterDaysWithChildren($days, $number_childrens);
         // make snappy pdf
         $pdf = \PDF::loadView('pdffile.accountant.transportationRegion', compact('days', 'costs', 'number_childrens', 'region', 'ages'));
         $pdf->setPaper('A3', 'landscape');
@@ -2415,10 +2477,7 @@ class AccountantController extends Controller
 
     public function reportregion(Request $request, $id, $start, $end)
     {
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('months', 'months.id', '=', 'days.month_id')
-            ->join('years', 'years.id', '=', 'days.year_id')
-            ->get(['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
 
         $costs = Protsent::where('region_id', $id)
             ->where('start_date', '<=', $days[0]->created_at->format('Y-m-d'))
@@ -2430,11 +2489,11 @@ class AccountantController extends Controller
         $ages = Age_range::all();
 
         $kindgardens = Kindgarden::where('region_id', $id)->where('hide', 1)->get();
+        $dayIds = $days->pluck('id')->toArray();
         $number_childrens = [];
         foreach ($kindgardens as $kindgarden) {
             foreach ($ages as $age) {
-                $number_childrens[$kindgarden->id][$age->id] = Number_children::where('number_childrens.day_id', '>=', $start)
-                    ->where('number_childrens.day_id', '<=', $end)
+                $number_childrens[$kindgarden->id][$age->id] = Number_children::whereIn('number_childrens.day_id', $dayIds)
                     ->where('kingar_name_id', $kindgarden->id)
                     ->where('king_age_name_id', $age->id)
                     ->sum('kingar_children_number');
@@ -2455,23 +2514,20 @@ class AccountantController extends Controller
 
         $region = Region::where('id', $id)->first();
 
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('years', 'days.year_id', '=', 'years.id')
-            ->join('months', 'days.month_id', '=', 'months.id')
-            ->get(['days.day_number', 'months.id as month_id', 'months.month_name', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.id as month_id', 'months.month_name', 'years.year_name', 'days.created_at']);
 
         $costs = [];
         $number_childrens = [];
         $ages = Age_range::all();
-        // dd($days->last()->year_name.'-'.($days->last()->month_id % 12 == 0 ? 12 : $days->last()->month_id % 12).$days->last()->day_number); 
+        $dayIds = $days->pluck('id')->toArray();
+        // dd($days->last()->year_name.'-'.($days->last()->month_id % 12 == 0 ? 12 : $days->last()->month_id % 12).$days->last()->day_number);
         foreach ($ages as $age) {
             $costs[$age->id] = Protsent::where('region_id', $id)
                 ->where('age_range_id', $age->id)
                 ->where('start_date', '<=', $days[0]->created_at->format('Y-m-d'))
                 ->where('end_date', '>=', $days->last()->created_at->format('Y-m-d'))
                 ->first();
-            $number_childrens[$age->id] = Number_children::where('number_childrens.day_id', '>=', $start)
-                ->where('number_childrens.day_id', '<=', $end)
+            $number_childrens[$age->id] = Number_children::whereIn('number_childrens.day_id', $dayIds)
                 ->whereIn('kingar_name_id', $kindgardens->pluck('id')->toArray())
                 ->where('king_age_name_id', $age->id)
                 ->sum('kingar_children_number');
@@ -2534,14 +2590,12 @@ class AccountantController extends Controller
 
         $region = Region::where('id', $id)->first();
 
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('years', 'days.year_id', '=', 'years.id')
-            ->join('months', 'days.month_id', '=', 'months.id')
-            ->get(['days.day_number', 'months.id as month_id', 'months.month_name', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.id as month_id', 'months.month_name', 'years.year_name', 'days.created_at']);
 
         $costs = [];
         $total_number_children = [];
         $ages = Age_range::all();
+        $dayIds = $days->pluck('id')->toArray();
 
         // Har bir yosh guruhi uchun protsent va bolalar sonini olish
         foreach ($ages as $age) {
@@ -2553,8 +2607,7 @@ class AccountantController extends Controller
             if (!isset($total_number_children[$age->id])) {
                 $total_number_children[$age->id] = 0;
             }
-            $total_number_children[$age->id] += Number_children::where('number_childrens.day_id', '>=', $start)
-                ->where('number_childrens.day_id', '<=', $end)
+            $total_number_children[$age->id] += Number_children::whereIn('number_childrens.day_id', $dayIds)
                 ->whereIn('kingar_name_id', $kindgardens->pluck('id')->toArray())
                 ->where('king_age_name_id', $age->id)
                 ->sum('kingar_children_number');
@@ -2636,10 +2689,7 @@ class AccountantController extends Controller
 
     public function reportRegionSecondary(Request $request, $id, $start, $end)
     {
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('months', 'months.id', '=', 'days.month_id')
-            ->join('years', 'years.id', '=', 'days.year_id')
-            ->get(['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.month_name', 'years.year_name', 'days.created_at']);
         $ages = Age_range::orderBy('id', 'desc')->get();
         $costs = Protsent::where('region_id', $id)
             ->where('start_date', '<=', $days[0]->created_at->format('Y-m-d'))
@@ -2647,11 +2697,11 @@ class AccountantController extends Controller
             ->get();
         $region = Region::where('id', $id)->first();
         $kindgardens = Kindgarden::where('region_id', $id)->where('hide', 1)->get();
+        $dayIds = $days->pluck('id')->toArray();
         $number_childrens = [];
         foreach ($kindgardens as $kindgarden) {
             foreach ($ages as $age) {
-                $number_childrens[$kindgarden->id][$age->id] = Number_children::where('number_childrens.day_id', '>=', $start)
-                    ->where('number_childrens.day_id', '<=', $end)
+                $number_childrens[$kindgarden->id][$age->id] = Number_children::whereIn('number_childrens.day_id', $dayIds)
                     ->where('kingar_name_id', $kindgarden->id)
                     ->where('king_age_name_id', $age->id)
                     ->sum('kingar_children_number');
@@ -2668,10 +2718,7 @@ class AccountantController extends Controller
 
     public function reportProductsOfRegion(Request $request, $id, $start, $end, $ageid)
     {
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('months', 'months.id', '=', 'days.month_id')
-            ->join('years', 'years.id', '=', 'days.year_id')
-            ->get(['days.id', 'days.day_number', 'months.month_name', 'days.month_id', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.month_name', 'days.month_id', 'years.year_name', 'days.created_at']);
         $protsent = Protsent::where('region_id', $id)
             ->where('start_date', '<=', $days[0]->created_at->format('Y-m-d'))
             ->where('end_date', '>=', $days[count($days) - 1]->created_at->format('Y-m-d'))
@@ -2793,13 +2840,11 @@ class AccountantController extends Controller
 
         $region = Region::where('id', $kindgar->region_id)->first();
 
-        $days = Day::where('days.id', '>=', $start)->where('days.id', '<=', $end)
-            ->join('years', 'days.year_id', '=', 'years.id')
-            ->join('months', 'days.month_id', '=', 'months.id')
-            ->get(['days.day_number', 'months.id as month_id', 'years.year_name', 'days.created_at']);
+        $days = $this->getDaysByDateRange($start, $end, ['days.id', 'days.day_number', 'months.id as month_id', 'years.year_name', 'days.created_at']);
 
         $costs = [];
         $total_number_children = [];
+        $dayIds = $days->pluck('id')->toArray();
 
         // Har bir yosh guruhi uchun protsent va bolalar sonini olish
         foreach ($kindgar->age_range as $age) {
@@ -2810,8 +2855,7 @@ class AccountantController extends Controller
             if (!isset($total_number_children[$age->id])) {
                 $total_number_children[$age->id] = 0;
             }
-            $total_number_children[$age->id] += Number_children::where('day_id', '>=', $start)
-                ->where('day_id', '<=', $end)
+            $total_number_children[$age->id] += Number_children::whereIn('day_id', $dayIds)
                 ->where('kingar_name_id', $id)
                 ->where('king_age_name_id', $age->id)
                 ->sum('kingar_children_number');
@@ -3286,7 +3330,20 @@ class AccountantController extends Controller
             }
         });
 
-        return $nakproducts;
+        // Filter out days that have no product data
+        $activeDayIds = [];
+        foreach ($nakproducts as $key => $row) {
+            if ($key === 0) continue; // Skip "Болалар сони" row
+            foreach ($days as $day) {
+                if (isset($row[$day->id])) {
+                    $activeDayIds[] = $day->id;
+                }
+            }
+        }
+        $activeDayIds = array_unique($activeDayIds);
+        $filteredDays = $days->filter(fn($day) => in_array($day->id, $activeDayIds))->values();
+
+        return ['nakproducts' => $nakproducts, 'days' => $filteredDays];
     }
 
     /**
@@ -3497,9 +3554,10 @@ class AccountantController extends Controller
                     }
                 }
             }
+            $days_transportation = $this->filterDaysWithChildren($days, $number_childrens);
 
             $pdf_transportation = \PDF::loadView('pdffile.accountant.transportation', [
-                'days' => $days,
+                'days' => $days_transportation,
                 'costs' => $costs_common,
                 'number_childrens' => $number_childrens,
                 'kindgar' => $kindgar,
@@ -3515,12 +3573,14 @@ class AccountantController extends Controller
         // 4. Nakapit without cost PDF'larni yaratish
         if (in_array('nakapit', $selectedDocs)) {
             foreach ($kindgar->age_range as $age) {
-                $nakproducts_without = $this->getNakapitWithoutCostData($id, $age->id, $start, $end, $days);
+                $nakapit_result = $this->getNakapitWithoutCostData($id, $age->id, $start, $end, $days);
+                $nakproducts_without = $nakapit_result['nakproducts'];
+                $days_without = $nakapit_result['days'];
                 $protsent_without = $this->getCachedProtsent($kindgar->region_id, $age->id, $days->last()->created_at->format('Y-m-d'));
 
                 $pdf_without = \PDF::loadView('pdffile.accountant.nakapitwithoutcost', [
                     'age' => $age,
-                    'days' => $days,
+                    'days' => $days_without,
                     'nakproducts' => $nakproducts_without,
                     'kindgar' => $kindgar,
                     'protsent' => $protsent_without

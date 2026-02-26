@@ -8,7 +8,7 @@
     <title>Yuk xati</title>
     <style>
         @page {
-            margin: 0.2in 0.8in 0.2in 0.3in;
+            margin: 0.2in 0.8in 0.2in 0.8in;
             size: A4 portrait;
         }
 
