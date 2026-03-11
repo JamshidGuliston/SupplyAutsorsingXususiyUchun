@@ -3451,8 +3451,6 @@ class AccountantController extends Controller
         // Protsent ma'lumotlarini cache qilish
         $this->cachedProtsents = Protsent::where('region_id', $kindgar->region_id)
             ->whereIn('age_range_id', $ageIds)
-            ->where('start_date', '<=', $days->last()->created_at->format('Y-m-d'))
-            ->where('end_date', '>=', $days->first()->created_at->format('Y-m-d'))
             ->get()
             ->groupBy('age_range_id');
 
@@ -3507,10 +3505,12 @@ class AccountantController extends Controller
             return null;
         }
 
-        return $this->cachedProtsents[$ageId]
+        $result = $this->cachedProtsents[$ageId]
             ->where('start_date', '<=', $date)
             ->where('end_date', '>=', $date)
             ->first();
+
+        return $result ?? $this->cachedProtsents[$ageId]->first();
     }
 
     /**
